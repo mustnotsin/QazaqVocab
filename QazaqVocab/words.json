@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "kazakh": "сәуле",
+    "partOfSpeech": "зат есім",
+    "translation": "Ray of light / Beam",
+    "example": "Күн сәулесі бөлмеге түсті."
+  },
+  {
+    "id": 2,
+    "kazakh": "батыл",
+    "partOfSpeech": "сын есім",
+    "translation": "Brave / Courageous",
+    "example": "Ол өте батыл шешім қабылдады."
+  },
+  {
+    "id": 3,
+    "kazakh": "парасат",
+    "partOfSpeech": "зат есім",
+    "translation": "Wisdom / Intellect",
+    "example": "Парасатты адам әрқашан сабырлы болады."
+  },
+  {
+    "id": 4,
+    "kazakh": "жүгіру",
+    "partOfSpeech": "етістік",
+    "translation": "To run",
+    "example": "Ол таңертең саябақта жүгіреді."
+  }
+]
