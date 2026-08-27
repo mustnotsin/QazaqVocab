@@ -1,4 +1,13 @@
 import SwiftUI
+import UIKit
+
+struct HapticManager {
+    static func impact(style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+        let generator = UIImpactFeedbackGenerator(style: style)
+        generator.prepare()
+        generator.impactOccurred()
+    }
+}
 
 struct ContentView: View {
     @State private var words: [WordItem] = loadWords()
@@ -110,6 +119,7 @@ struct HomeFeedView: View {
                                     iconColor: favoriteWordIDs.contains(item.id) ? .red : .white.opacity(0.7),
                                     isActive: favoriteWordIDs.contains(item.id)
                                 ) {
+                                    HapticManager.impact(style: .medium)
                                     toggleMembership(id: item.id, set: &favoriteWordIDs)
                                 }
                                 
@@ -118,6 +128,7 @@ struct HomeFeedView: View {
                                     iconColor: .white.opacity(0.85),
                                     isActive: false
                                 ) {
+                                    HapticManager.impact(style: .light)
                                     selectedWordForDetails = item
                                 }
                                 
@@ -126,6 +137,7 @@ struct HomeFeedView: View {
                                     iconColor: wantToLearnIDs.contains(item.id) ? .yellow : .white.opacity(0.7),
                                     isActive: wantToLearnIDs.contains(item.id)
                                 ) {
+                                    HapticManager.impact(style: .medium)
                                     toggleMembership(id: item.id, set: &wantToLearnIDs)
                                 }
                             }
@@ -294,7 +306,10 @@ struct ProfileSectionView: View {
                         iconColor: .red,
                         isSelected: selectedTab == 0
                     )
-                    .onTapGesture { selectedTab = 0 }
+                    .onTapGesture {
+                        HapticManager.impact(style: .light)
+                        selectedTab = 0
+                    }
                     
                     CategorySummaryCard(
                         title: "Want to Learn",
@@ -303,7 +318,10 @@ struct ProfileSectionView: View {
                         iconColor: .yellow,
                         isSelected: selectedTab == 1
                     )
-                    .onTapGesture { selectedTab = 1 }
+                    .onTapGesture {
+                        HapticManager.impact(style: .light)
+                        selectedTab = 1
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.top, 16)
