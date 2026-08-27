@@ -2,15 +2,38 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var words: [WordItem] = loadWords()
-    @State private var favoriteWordIDs: Set<Int> = []
-    @State private var wantToLearnIDs: Set<Int> = []
+    
+    @AppStorage("favorite_word_ids") private var favoriteWordIDsRaw: String = "[]"
+    @AppStorage("want_to_learn_ids") private var wantToLearnIDsRaw: String = "[]"
+    
+    private var favoriteWordIDs: Binding<Set<Int>> {
+        Binding(
+            get: {
+                decodeIDSet(from: favoriteWordIDsRaw)
+            },
+            set: { newSet in
+                favoriteWordIDsRaw = encodeIDSet(newSet)
+            }
+        )
+    }
+    
+    private var wantToLearnIDs: Binding<Set<Int>> {
+        Binding(
+            get: {
+                decodeIDSet(from: wantToLearnIDsRaw)
+            },
+            set: { newSet in
+                wantToLearnIDsRaw = encodeIDSet(newSet)
+            }
+        )
+    }
     
     var body: some View {
         TabView {
             HomeFeedView(
                 words: words,
-                favoriteWordIDs: $favoriteWordIDs,
-                wantToLearnIDs: $wantToLearnIDs
+                favoriteWordIDs: favoriteWordIDs,
+                wantToLearnIDs: wantToLearnIDs
             )
             .tabItem {
                 Label("Words", systemImage: "text.book.closed")
@@ -18,14 +41,30 @@ struct ContentView: View {
             
             ProfileSectionView(
                 words: words,
-                favoriteWordIDs: $favoriteWordIDs,
-                wantToLearnIDs: $wantToLearnIDs
+                favoriteWordIDs: favoriteWordIDs,
+                wantToLearnIDs: wantToLearnIDs
             )
             .tabItem {
                 Label("Profile", systemImage: "person")
             }
         }
         .preferredColorScheme(.dark)
+    }
+    
+    private func decodeIDSet(from raw: String) -> Set<Int> {
+        guard let data = raw.data(using: .utf8),
+              let array = try? JSONDecoder().decode([Int].self, from: data) else {
+            return []
+        }
+        return Set(array)
+    }
+    
+    private func encodeIDSet(_ set: Set<Int>) -> String {
+        guard let data = try? JSONEncoder().encode(Array(set)),
+              let string = String(data: data, encoding: .utf8) else {
+            return "[]"
+        }
+        return string
     }
 }
 
