@@ -4,27 +4,51 @@
     "kazakh": "сәуле",
     "partOfSpeech": "зат есім",
     "translation": "Ray of light / Beam",
-    "example": "Күн сәулесі бөлмеге түсті."
+    "example": "Күн сәулесі бөлмеге түсті.",
+    "phonetic": "säwle",
+    "details": "Refers to a beam or ray of light, often associated with warmth, hope, and enlightenment in poetic Kazakh literature.",
+    "additionalExamples": [
+      "Үміт сәулесі жүрегімді жылытты.",
+      "Шам сәулесі қараңғыны сейілтті."
+    ]
   },
   {
     "id": 2,
     "kazakh": "батыл",
     "partOfSpeech": "сын есім",
     "translation": "Brave / Courageous",
-    "example": "Ол өте батыл шешім қабылдады."
+    "example": "Ол өте батыл шешім қабылдады.",
+    "phonetic": "batyl",
+    "details": "Used to describe someone who acts with boldness and conviction without hesitation.",
+    "additionalExamples": [
+      "Батыл қадам жасаудан қорықпа.",
+      "Оның батыл мінезі барлығына үлгі болды."
+    ]
   },
   {
     "id": 3,
     "kazakh": "парасат",
     "partOfSpeech": "зат есім",
     "translation": "Wisdom / Intellect",
-    "example": "Парасатты адам әрқашан сабырлы болады."
+    "example": "Парасатты адам әрқашан сабырлы болады.",
+    "phonetic": "parasat",
+    "details": "A profound philosophical term referring to reasoned intelligence, deep insight, and moral wisdom.",
+    "additionalExamples": [
+      "Парасат биігіне жету – өмірлік мақсат.",
+      "Парасатты сөз көңілге қонады."
+    ]
   },
   {
     "id": 4,
     "kazakh": "жүгіру",
     "partOfSpeech": "етістік",
     "translation": "To run",
-    "example": "Ол таңертең саябақта жүгіреді."
+    "example": "Ол таңертең саябақта жүгіреді.",
+    "phonetic": "jügirü",
+    "details": "The basic action verb for running, moving quickly on foot, or pursuing something rapidly.",
+    "additionalExamples": [
+      "Балалар алаңда жүгіріп жүр.",
+      "Уақыт тым жылдам жүгіреді."
+    ]
   }
 ]

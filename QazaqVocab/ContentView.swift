@@ -1,33 +1,39 @@
 import SwiftUI
 
-// MARK: - 1. Main Navigation (Bottom Tabs)
 struct ContentView: View {
+    @State private var words: [WordItem] = loadWords()
+    @State private var favoriteWordIDs: Set<Int> = []
+    @State private var wantToLearnIDs: Set<Int> = []
+    
     var body: some View {
         TabView {
-            // First Tab: The Word Feed
-            HomeView()
-                .tabItem {
-                    Label("Сөздер", systemImage: "rectangle.portrait.on.rectangle.portrait.angled")
-                }
+            HomeFeedView(
+                words: words,
+                favoriteWordIDs: $favoriteWordIDs,
+                wantToLearnIDs: $wantToLearnIDs
+            )
+            .tabItem {
+                Label("Words", systemImage: "text.book.closed")
+            }
             
-            // Second Tab: The User Profile
-            ProfileView()
-                .tabItem {
-                    Label("Профиль", systemImage: "person.crop.circle.fill")
-                }
+            ProfileSectionView(
+                words: words,
+                favoriteWordIDs: $favoriteWordIDs,
+                wantToLearnIDs: $wantToLearnIDs
+            )
+            .tabItem {
+                Label("Profile", systemImage: "person")
+            }
         }
-        // Forces the active tab icon to be white
-        .tint(.white)
-        // Forces the entire app (including the bottom bar) into dark mode
         .preferredColorScheme(.dark)
     }
 }
 
-// MARK: - 2. Home Page (Your Word Feed)
-struct HomeView: View {
-    @State private var words: [WordItem] = loadWords()
-    @State private var likedWords: Set<Int> = []
-    @State private var favoriteWords: Set<Int> = []
+struct HomeFeedView: View {
+    let words: [WordItem]
+    @Binding var favoriteWordIDs: Set<Int>
+    @Binding var wantToLearnIDs: Set<Int>
+    @State private var selectedWordForDetails: WordItem?
     
     var body: some View {
         GeometryReader { proxy in
@@ -59,32 +65,32 @@ struct HomeView: View {
                                 .padding(.horizontal, 36)
                                 .padding(.top, 16)
                             
-                            HStack(spacing: 28) {
-                                Button(action: {
-                                    if likedWords.contains(item.id) {
-                                        likedWords.remove(item.id)
-                                    } else {
-                                        likedWords.insert(item.id)
-                                    }
-                                }) {
-                                    Image(systemName: likedWords.contains(item.id) ? "heart.fill" : "heart")
-                                        .font(.system(size: 24))
-                                        .foregroundStyle(likedWords.contains(item.id) ? .red : Color.white.opacity(0.8))
+                            HStack(spacing: 24) {
+                                ActionPillButton(
+                                    systemName: favoriteWordIDs.contains(item.id) ? "heart.fill" : "heart",
+                                    iconColor: favoriteWordIDs.contains(item.id) ? .red : .white.opacity(0.7),
+                                    isActive: favoriteWordIDs.contains(item.id)
+                                ) {
+                                    toggleMembership(id: item.id, set: &favoriteWordIDs)
                                 }
                                 
-                                Button(action: {
-                                    if favoriteWords.contains(item.id) {
-                                        favoriteWords.remove(item.id)
-                                    } else {
-                                        favoriteWords.insert(item.id)
-                                    }
-                                }) {
-                                    Image(systemName: favoriteWords.contains(item.id) ? "star.fill" : "star")
-                                        .font(.system(size: 24))
-                                        .foregroundStyle(favoriteWords.contains(item.id) ? .yellow : Color.white.opacity(0.8))
+                                ActionPillButton(
+                                    systemName: "info.circle",
+                                    iconColor: .white.opacity(0.85),
+                                    isActive: false
+                                ) {
+                                    selectedWordForDetails = item
+                                }
+                                
+                                ActionPillButton(
+                                    systemName: wantToLearnIDs.contains(item.id) ? "bookmark.fill" : "bookmark",
+                                    iconColor: wantToLearnIDs.contains(item.id) ? .yellow : .white.opacity(0.7),
+                                    isActive: wantToLearnIDs.contains(item.id)
+                                ) {
+                                    toggleMembership(id: item.id, set: &wantToLearnIDs)
                                 }
                             }
-                            .padding(.top, 20)
+                            .padding(.top, 28)
                             
                             Spacer()
                         }
@@ -94,110 +100,250 @@ struct HomeView: View {
             }
             .scrollTargetBehavior(.paging)
             .background(Color(red: 0.12, green: 0.12, blue: 0.12).ignoresSafeArea())
+            .sheet(item: $selectedWordForDetails) { word in
+                WordDetailSheet(word: word)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+        }
+    }
+    
+    private func toggleMembership(id: Int, set: inout Set<Int>) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+            if set.contains(id) {
+                set.remove(id)
+            } else {
+                set.insert(id)
+            }
         }
     }
 }
 
-// MARK: - 3. Profile Page Design
-struct ProfileView: View {
+struct ActionPillButton: View {
+    let systemName: String
+    let iconColor: Color
+    let isActive: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Circle()
+                    .fill(Color(red: 0.18, green: 0.18, blue: 0.18))
+                    .frame(width: 52, height: 52)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+                    )
+                
+                Image(systemName: systemName)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(iconColor)
+                    .scaleEffect(isActive ? 1.15 : 1.0)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct WordDetailSheet: View {
+    let word: WordItem
+    
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
-                    
-                    // User Header Area
-                    VStack(spacing: 12) {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .frame(width: 80, height: 80)
-                            .foregroundStyle(Color.white.opacity(0.8))
-                            .padding(.top, 20)
-                        
-                        Text("Қонақ / Guest")
-                            .font(.title2)
-                            .fontWeight(.semibold)
+                VStack(alignment: .leading, spacing: 22) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(word.kazakh.lowercased())
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                    }
-                    
-                    // Stats Grid Layout
-                    HStack(spacing: 16) {
-                        StatCard(title: "Learned", value: "12", icon: "checkmark.circle.fill", color: .green)
-                        StatCard(title: "Streak", value: "3", icon: "flame.fill", color: .orange)
-                    }
-                    .padding(.horizontal)
-                    
-                    // Premium / Upsell Card (Crucial for indie revenue)
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "star.fill")
-                                .foregroundStyle(.yellow)
-                            Text("QazaqVocab Pro")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.white)
-                        }
                         
-                        Text("Unlock all word categories, native audio pronunciation, and interactive widgets.")
-                            .font(.subheadline)
-                            .foregroundStyle(Color.white.opacity(0.7))
-                            .fixedSize(horizontal: false, vertical: true)
-                        
-                        Button(action: {
-                            // Upgrade action goes here later
-                        }) {
-                            Text("Unlock Lifetime Access")
+                        HStack(spacing: 8) {
+                            if let phonetic = word.phonetic {
+                                Text("/\(phonetic)/")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.white.opacity(0.6))
+                            }
+                            
+                            Text("•")
+                                .foregroundStyle(.white.opacity(0.3))
+                            
+                            Text(word.partOfSpeech.lowercased())
                                 .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.black)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .italic()
+                                .foregroundStyle(.white.opacity(0.6))
                         }
-                        .padding(.top, 4)
+                        
+                        Text(word.translation)
+                            .font(.title3)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.white.opacity(0.9))
+                            .padding(.top, 4)
                     }
-                    .padding(20)
-                    .background(Color.white.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .padding(.horizontal)
                     
-                    Spacer()
+                    Divider()
+                        .background(Color.white.opacity(0.1))
+                    
+                    if let details = word.details {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Usage & Nuance")
+                                .font(.footnote)
+                                .fontWeight(.semibold)
+                                .textCase(.uppercase)
+                                .foregroundStyle(.white.opacity(0.5))
+                            
+                            Text(details)
+                                .font(.body)
+                                .foregroundStyle(.white.opacity(0.85))
+                                .lineSpacing(4)
+                        }
+                    }
+                    
+                    if let examples = word.additionalExamples, !examples.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("More Examples")
+                                .font(.footnote)
+                                .fontWeight(.semibold)
+                                .textCase(.uppercase)
+                                .foregroundStyle(.white.opacity(0.5))
+                            
+                            ForEach(examples, id: \.self) { ex in
+                                HStack(alignment: .top, spacing: 10) {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.3))
+                                        .frame(width: 5, height: 5)
+                                        .padding(.top, 7)
+                                    
+                                    Text(ex)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.white.opacity(0.8))
+                                }
+                            }
+                        }
+                    }
                 }
+                .padding(24)
             }
-            // Matching dark-grey background
             .background(Color(red: 0.12, green: 0.12, blue: 0.12).ignoresSafeArea())
-            .navigationTitle("Профиль")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
 
-// MARK: - Reusable UI Component for Stats
-struct StatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
+struct ProfileSectionView: View {
+    let words: [WordItem]
+    @Binding var favoriteWordIDs: Set<Int>
+    @Binding var wantToLearnIDs: Set<Int>
+    @State private var selectedTab: Int = 0
+    
+    private var favoriteWords: [WordItem] {
+        words.filter { favoriteWordIDs.contains($0.id) }
+    }
+    
+    private var wantToLearnWords: [WordItem] {
+        words.filter { wantToLearnIDs.contains($0.id) }
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        NavigationStack {
+            VStack(spacing: 20) {
+                HStack(spacing: 16) {
+                    CategorySummaryCard(
+                        title: "Favorite Words",
+                        count: favoriteWords.count,
+                        icon: "heart.fill",
+                        iconColor: .red,
+                        isSelected: selectedTab == 0
+                    )
+                    .onTapGesture { selectedTab = 0 }
+                    
+                    CategorySummaryCard(
+                        title: "Want to Learn",
+                        count: wantToLearnWords.count,
+                        icon: "bookmark.fill",
+                        iconColor: .yellow,
+                        isSelected: selectedTab == 1
+                    )
+                    .onTapGesture { selectedTab = 1 }
+                }
+                .padding(.horizontal)
+                .padding(.top, 16)
+                
+                let activeList = selectedTab == 0 ? favoriteWords : wantToLearnWords
+                let emptyMessage = selectedTab == 0 ? "No favorite words added yet" : "No words marked to learn yet"
+                
+                if activeList.isEmpty {
+                    Spacer()
+                    VStack(spacing: 10) {
+                        Image(systemName: selectedTab == 0 ? "heart.slash" : "bookmark.slash")
+                            .font(.system(size: 40))
+                            .foregroundStyle(.white.opacity(0.3))
+                        Text(emptyMessage)
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                    Spacer()
+                } else {
+                    List(activeList) { word in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(word.kazakh.lowercased())
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                                Spacer()
+                                Text(word.partOfSpeech.lowercased())
+                                    .font(.caption)
+                                    .italic()
+                                    .foregroundStyle(.white.opacity(0.5))
+                            }
+                            Text(word.translation)
+                                .font(.subheadline)
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+                        .listRowBackground(Color(red: 0.16, green: 0.16, blue: 0.16))
+                    }
+                    .scrollContentBackground(.hidden)
+                }
+            }
+            .background(Color(red: 0.10, green: 0.10, blue: 0.10).ignoresSafeArea())
+            .navigationTitle("Profile")
+        }
+    }
+}
+
+struct CategorySummaryCard: View {
+    let title: String
+    let count: Int
+    let icon: String
+    let iconColor: Color
+    let isSelected: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundStyle(color)
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundStyle(Color.white.opacity(0.6))
+                    .font(.headline)
+                    .foregroundStyle(iconColor)
+                Spacer()
+                Text("\(count)")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
             }
             
-            Text(value)
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundStyle(.white)
+            Text(title)
+                .font(.footnote)
+                .fontWeight(.medium)
+                .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Color.white.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(14)
+        .frame(maxWidth: .infinity)
+        .background(isSelected ? Color(red: 0.22, green: 0.22, blue: 0.24) : Color(red: 0.15, green: 0.15, blue: 0.15))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(isSelected ? iconColor.opacity(0.7) : Color.clear, lineWidth: 1.5)
+        )
     }
 }
 
