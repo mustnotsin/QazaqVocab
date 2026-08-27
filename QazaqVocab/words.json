@@ -50,5 +50,305 @@
       "Балалар алаңда жүгіріп жүр.",
       "Уақыт тым жылдам жүгіреді."
     ]
-  }
+  },
+    {
+      "id": 5,
+      "kazakh": "қоңыр",
+      "partOfSpeech": "сын есім",
+      "translation": "Modest, harmonious, spiritually deep, and connected to nature.",
+      "example": "Ол қоңыр мінезді, ешкімге зияны жоқ адам.",
+      "phonetic": "qoŋyr",
+      "details": "Beyond its literal meaning of \"brown,\" it symbolizes the philosophy of the nomad—moderation, stability, and inner tranquility. It frequently appears in poetic expressions to convey culturally specific emotions.",
+      "additionalExamples": [
+      "Қоңыр күз келгенде, жүректі бір мұң басады."
+      ]
+      },
+      {
+      "id": 6,
+      "kazakh": "аманат",
+      "partOfSpeech": "зат есім",
+      "translation": "A sacred trust or legacy left for safekeeping.",
+      "example": "Бұл жер – бізге бабалардан қалған аманат.",
+      "phonetic": "amanat",
+      "details": "A deeply rooted cultural concept referring to something precious (a word, a duty, an item, or even a person) entrusted to someone. Betraying it is considered a grave moral failure.",
+      "additionalExamples": [
+      "Досымның аманатын орындау – менің қасиетті борышым."
+      ]
+      },
+      {
+      "id": 7,
+      "kazakh": "обал",
+      "partOfSpeech": "зат есім",
+      "translation": "A sense of moral wrongness, unjust suffering, or pity.",
+      "example": "Мына нанды жерге тастама, обалына қаласың.",
+      "phonetic": "obal",
+      "details": "Used when someone harms a helpless creature, wastes food, or acts unjustly. It implies a karmic consequence for doing wrong to the innocent.",
+      "additionalExamples": [
+      "Жетім баланы жылатуға обалы жоқ па?"
+      ]
+      },
+      {
+      "id": 8,
+      "kazakh": "сауап",
+      "partOfSpeech": "зат есім",
+      "translation": "Spiritual merit or divine reward for a good deed.",
+      "example": "Жетімге көмектесу – үлкен сауап.",
+      "phonetic": "sauap",
+      "details": "An Islamic-derived concept deeply integrated into Kazakh morality. It motivates altruism, kindness, and helping those in need without expecting earthly returns.",
+      "additionalExamples": [
+      "Құдық қазған адамға көп сауап жазылады."
+      ]
+      },
+      {
+      "id": 9,
+      "kazakh": "қимас",
+      "partOfSpeech": "сын есім",
+      "translation": "Someone or something too dear to part with.",
+      "example": "Ол менің ең қимас досым еді.",
+      "phonetic": "qimas",
+      "details": "Evokes a poignant sense of attachment and the bittersweet pain of separation. It reflects the deep value placed on lifelong bonds and cherished memories.",
+      "additionalExamples": [
+      "Қимас шақтар артта қалды."
+      ]
+      },
+      {
+      "id": 10,
+      "kazakh": "зар",
+      "partOfSpeech": "зат есім",
+      "translation": "Deep, wailing sorrow or bitter lamentation.",
+      "example": "Ананың зары тас төбені теседі.",
+      "phonetic": "zar",
+      "details": "Represents an extreme state of grief or despair, often expressed vocally in traditional lamentations. It conveys a sorrow that resonates in the soul.",
+      "additionalExamples": [
+      "Елдің зарын еститін құлақ болсашы."
+      ]
+      },
+      {
+      "id": 11,
+      "kazakh": "тәуба",
+      "partOfSpeech": "зат есім",
+      "translation": "Gratitude, contentment, and spiritual repentance.",
+      "example": "Қолда барына тәуба ету керек.",
+      "phonetic": "täuba",
+      "details": "A reminder to be grateful for one's current state, avoiding hubris. It is a humble acknowledgment of one's limits and the blessings of the present moment.",
+      "additionalExamples": [
+      "Тәуба, осы күнімізге де шүкір."
+      ]
+      },
+      {
+      "id": 12,
+      "kazakh": "қанағат",
+      "partOfSpeech": "зат есім",
+      "translation": "Contentment and satisfaction with what one has.",
+      "example": "Қанағат қарын тойғызады.",
+      "phonetic": "qanağat",
+      "details": "A core moral virtue in Kazakh philosophy that warns against greed. It emphasizes finding peace and sufficiency in a modest life.",
+      "additionalExamples": [
+      "Адамға ең бірінші қанағат керек."
+      ]
+      },
+      {
+      "id": 13,
+      "kazakh": "шүкір",
+      "partOfSpeech": "үстеу",
+      "translation": "Expressing gratitude despite difficulties.",
+      "example": "Шүкір, бәрі де жақсы болып жатыр.",
+      "phonetic": "şükir",
+      "details": "Used daily to acknowledge that things could be worse, maintaining a positive and resilient outlook. It reflects a deep-seated optimism and faith.",
+      "additionalExamples": [
+      "Денсаулығым жақсы, соған шүкір етемін."
+      ]
+      },
+      {
+      "id": 14,
+      "kazakh": "намыс",
+      "partOfSpeech": "зат есім",
+      "translation": "Honor, dignity, and a sense of righteous pride.",
+      "example": "Ер жігітті намыс өлтіреді.",
+      "phonetic": "namys",
+      "details": "The internal compass that prevents shameful actions. In Kazakh culture, losing one's honor is considered worse than losing one's life.",
+      "additionalExamples": [
+      "Ұлттық намысты ояту – басты мақсат."
+      ]
+      },
+      {
+      "id": 15,
+      "kazakh": "кие",
+      "partOfSpeech": "зат есім",
+      "translation": "A sacred, protective aura or spirit.",
+      "example": "Аққудың киесі ұрады дейді үлкендер.",
+      "phonetic": "kie",
+      "details": "A belief that certain animals, places, or objects possess a mystical energy. Harming them brings inevitable misfortune or a spiritual curse.",
+      "additionalExamples": [
+      "Шаңырақтың өз киесі болады."
+      ]
+      },
+      {
+      "id": 16,
+      "kazakh": "кесір",
+      "partOfSpeech": "зат есім",
+      "translation": "Negative energy, misfortune, or collateral damage.",
+      "example": "Оның кесірі бүкіл ауылға тиді.",
+      "phonetic": "kesir",
+      "details": "Describes the negative fallout or bad luck caused by someone's arrogance, stubbornness, or bad actions, affecting innocent bystanders.",
+      "additionalExamples": [
+      "Кесірлі адамнан іргеңді аулақ сал."
+      ]
+      },
+      {
+      "id": 17,
+      "kazakh": "шарапат",
+      "partOfSpeech": "зат есім",
+      "translation": "Benevolent influence, grace, or radiating goodness.",
+      "example": "Жақсы адамның шарапаты тиеді.",
+      "phonetic": "şarapat",
+      "details": "The opposite of negative energy. It is the positive, uplifting effect that a wise or kind person has on their surroundings and the people they meet.",
+      "additionalExamples": [
+      "Ұстазымның шарапатын көп көрдім."
+      ]
+      },
+      {
+      "id": 18,
+      "kazakh": "мейірім",
+      "partOfSpeech": "зат есім",
+      "translation": "Deep compassion, loving kindness, and warmth.",
+      "example": "Ананың мейіріміне ештеңе тең келмейді.",
+      "phonetic": "meiirim",
+      "details": "The tender, unconditional love and empathy, most often associated with a mother's heart. It represents the purest form of emotional warmth.",
+      "additionalExamples": [
+      "Оның көзінен үлкен мейірімді байқадым."
+      ]
+      },
+      {
+      "id": 19,
+      "kazakh": "пейіл",
+      "partOfSpeech": "зат есім",
+      "translation": "Inner disposition, generosity, and breadth of soul.",
+      "example": "Пейілі кең адамның несібесі де мол болады.",
+      "phonetic": "peyil",
+      "details": "Refers to a person's underlying intentions and attitude towards others. A wide soul implies generosity and open-mindedness, attracting good fortune.",
+      "additionalExamples": [
+      "Пейілі тар адаммен дос болу қиын."
+      ]
+      },
+      {
+      "id": 20,
+      "kazakh": "дауа",
+      "partOfSpeech": "зат есім",
+      "translation": "The ultimate cure, remedy, or solace.",
+      "example": "Бұл дертке ешқандай дауа табылмай тұр.",
+      "phonetic": "daua",
+      "details": "Beyond a medical cure, it means a profound solution to a deep sorrow, problem, or existential ache. Often used when expressing that something is unfixable.",
+      "additionalExamples": [
+      "Жалғыздықтың дауасы бар ма?"
+      ]
+      },
+      {
+      "id": 21,
+      "kazakh": "құт",
+      "partOfSpeech": "зат есім",
+      "translation": "Divine blessing, vital force, and prosperity.",
+      "example": "Шаңыраққа құт қонсын!",
+      "phonetic": "qut",
+      "details": "A powerful ancient Turkic concept representing the mystical energy of abundance, luck, and life force that blesses a home or a person.",
+      "additionalExamples": [
+      "Елімізге құт-береке әкелген жыл болды."
+      ]
+      },
+      {
+      "id": 22,
+      "kazakh": "береке",
+      "partOfSpeech": "зат есім",
+      "translation": "Harmony, unity, and the resulting abundance.",
+      "example": "Берекесі кеткен үйден мейман қашады.",
+      "phonetic": "bereke",
+      "details": "Closely tied to vital prosperity, it emphasizes that true wealth and abundance only exist where there is peace, unity, and mutual respect within a group.",
+      "additionalExamples": [
+      "Ынтымақ бар жерде береке бар."
+      ]
+      },
+      {
+      "id": 23,
+      "kazakh": "ынтымақ",
+      "partOfSpeech": "зат есім",
+      "translation": "Solidarity, mutual understanding, and unity.",
+      "example": "Елдің күші – ынтымақта.",
+      "phonetic": "yntymaq",
+      "details": "The social glue of Kazakh society, highlighting the importance of collective harmony and working together for the common good.",
+      "additionalExamples": [
+      "Ынтымағы жарасқан отбасы екен."
+      ]
+      },
+      {
+      "id": 24,
+      "kazakh": "сағыныш",
+      "partOfSpeech": "зат есім",
+      "translation": "A deep, aching longing or nostalgic yearning.",
+      "example": "Туған жерге деген сағыныш жүрегімді өртеді.",
+      "phonetic": "sağynyş",
+      "details": "A profound emotional state of missing someone or something deeply. It is a frequent theme in Kazakh poetry and lyrical songs.",
+      "additionalExamples": [
+      "Көз жанарында үлкен сағыныш жатыр."
+      ]
+      },
+      {
+      "id": 25,
+      "kazakh": "толғау",
+      "partOfSpeech": "зат есім",
+      "translation": "Philosophical reflection or deep poetic musing.",
+      "example": "Жыраудың толғауы халықтың рухын көтерді.",
+      "phonetic": "tolğau",
+      "details": "A traditional form of poetic expression used to convey complex ideas on life, history, and destiny. It is a profound meditation translated into words.",
+      "additionalExamples": [
+      "Бұл күйдің ішінде терең толғау жатыр."
+      ]
+      },
+      {
+      "id": 26,
+      "kazakh": "арқа",
+      "partOfSpeech": "зат есім",
+      "translation": "Spiritual inspiration, trance, or creative surge.",
+      "example": "Ақынның арқасы ұстап, өлең төгілді.",
+      "phonetic": "arqa",
+      "details": "Rooted in ancient traditions, it describes a sudden, overwhelming wave of inspiration or energy that overtakes an artist, speaker, or warrior.",
+      "additionalExamples": [
+      "Күйшінің арқасы қозып, домбыраны безілдетті."
+      ]
+      },
+      {
+      "id": 27,
+      "kazakh": "жігер",
+      "partOfSpeech": "зат есім",
+      "translation": "Inner drive, willpower, and relentless determination.",
+      "example": "Қиындықтарды жеңу үшін жасымас жігер керек.",
+      "phonetic": "jiger",
+      "details": "The fiery resilience and spiritual strength required to overcome immense obstacles. It is the core of a strong and unyielding character.",
+      "additionalExamples": [
+      "Жас жігіттің бойындағы жігері тасып тұр."
+      ]
+      },
+      {
+      "id": 28,
+      "kazakh": "парасат",
+      "partOfSpeech": "зат есім",
+      "translation": "Profound wisdom, intellect, and moral clarity.",
+      "example": "Ол кісінің парасаты биік еді.",
+      "phonetic": "parasat",
+      "details": "Represents a high level of enlightenment where intelligence is guided by strong ethical principles and a deep understanding of human nature.",
+      "additionalExamples": [
+      "Парасатты адам ашуға бой алдырмайды."
+      ]
+      },
+      {
+      "id": 29,
+      "kazakh": "байтақ",
+      "partOfSpeech": "сын есім",
+      "translation": "Boundlessly vast, endless, and majestic.",
+      "example": "Ұлан-ғайыр байтақ даламызбен мақтанамыз.",
+      "phonetic": "baitaq",
+      "details": "Exclusively used to describe the immense, sweeping expanses of the Kazakh steppe, evoking a sense of freedom and grandeur.",
+      "additionalExamples": [
+      "Байтақ елімнің болашағы жарқын болсын."
+      ]
+      }
 ]
