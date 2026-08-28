@@ -10,46 +10,47 @@ struct HapticManager {
 }
 
 struct ContentView: View {
-    @State private var words: [WordItem] = loadWords()
+    @State private var allWords: [WordItem] = loadWords()
     
     @AppStorage("favorite_word_ids") private var favoriteWordIDsRaw: String = "[]"
     @AppStorage("want_to_learn_ids") private var wantToLearnIDsRaw: String = "[]"
+    @AppStorage("seen_word_ids") private var seenWordIDsRaw: String = "[]"
     
     private var favoriteWordIDs: Binding<Set<Int>> {
         Binding(
-            get: {
-                decodeIDSet(from: favoriteWordIDsRaw)
-            },
-            set: { newSet in
-                favoriteWordIDsRaw = encodeIDSet(newSet)
-            }
+            get: { decodeIDSet(from: favoriteWordIDsRaw) },
+            set: { favoriteWordIDsRaw = encodeIDSet($0) }
         )
     }
     
     private var wantToLearnIDs: Binding<Set<Int>> {
         Binding(
-            get: {
-                decodeIDSet(from: wantToLearnIDsRaw)
-            },
-            set: { newSet in
-                wantToLearnIDsRaw = encodeIDSet(newSet)
-            }
+            get: { decodeIDSet(from: wantToLearnIDsRaw) },
+            set: { wantToLearnIDsRaw = encodeIDSet($0) }
+        )
+    }
+    
+    private var seenWordIDs: Binding<Set<Int>> {
+        Binding(
+            get: { decodeIDSet(from: seenWordIDsRaw) },
+            set: { seenWordIDsRaw = encodeIDSet($0) }
         )
     }
     
     var body: some View {
         TabView {
             HomeFeedView(
-                words: words,
+                allWords: allWords,
                 favoriteWordIDs: favoriteWordIDs,
-                wantToLearnIDs: wantToLearnIDs
+                wantToLearnIDs: wantToLearnIDs,
+                seenWordIDs: seenWordIDs
             )
             .tabItem {
                 Label("Words", systemImage: "text.book.closed")
             }
             
             ProfileSectionView(
-                words: words,
+                words: allWords,
                 favoriteWordIDs: favoriteWordIDs,
                 wantToLearnIDs: wantToLearnIDs
             )
@@ -78,16 +79,19 @@ struct ContentView: View {
 }
 
 struct HomeFeedView: View {
-    let words: [WordItem]
+    let allWords: [WordItem]
     @Binding var favoriteWordIDs: Set<Int>
     @Binding var wantToLearnIDs: Set<Int>
+    @Binding var seenWordIDs: Set<Int>
+    
+    @State private var feedWords: [WordItem] = []
     @State private var selectedWordForDetails: WordItem?
     
     var body: some View {
         GeometryReader { proxy in
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(spacing: 0) {
-                    ForEach(words) { item in
+                    ForEach(feedWords) { item in
                         VStack(spacing: 14) {
                             Spacer()
                             
@@ -146,6 +150,9 @@ struct HomeFeedView: View {
                             Spacer()
                         }
                         .frame(width: proxy.size.width, height: proxy.size.height)
+                        .onAppear {
+                            markAsSeen(id: item.id)
+                        }
                     }
                 }
             }
@@ -156,6 +163,28 @@ struct HomeFeedView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+            .onAppear {
+                prepareFeed()
+            }
+        }
+    }
+    
+    private func prepareFeed() {
+        guard feedWords.isEmpty else { return }
+        
+        var unseenWords = allWords.filter { !seenWordIDs.contains($0.id) }
+        
+        if unseenWords.isEmpty && !allWords.isEmpty {
+            seenWordIDs.removeAll()
+            unseenWords = allWords
+        }
+        
+        feedWords = unseenWords.shuffled()
+    }
+    
+    private func markAsSeen(id: Int) {
+        if !seenWordIDs.contains(id) {
+            seenWordIDs.insert(id)
         }
     }
     
