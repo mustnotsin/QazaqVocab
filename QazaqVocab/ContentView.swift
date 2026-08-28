@@ -11,46 +11,52 @@ struct HapticManager {
 }
 
 struct ContentView: View {
-    @State private var words: [WordItem] = loadWords()
+    @State private var allWords: [WordItem] = loadWords()
     
-    @AppStorage("favorite_word_ids") private var favoriteWordIDsRaw: String = "[]"
-    @AppStorage("want_to_learn_ids") private var wantToLearnIDsRaw: String = "[]"
+    @AppStorage("favorite_word_ids", store: UserDefaults(suiteName: "group.com.yourname.QazaqVocab"))
+    private var favoriteWordIDsRaw: String = "[]"
+    
+    @AppStorage("want_to_learn_ids", store: UserDefaults(suiteName: "group.com.yourname.QazaqVocab"))
+    private var wantToLearnIDsRaw: String = "[]"
+    
+    @AppStorage("seen_word_ids", store: UserDefaults(suiteName: "group.com.yourname.QazaqVocab"))
+    private var seenWordIDsRaw: String = "[]"
     
     private var favoriteWordIDs: Binding<Set<Int>> {
         Binding(
-            get: {
-                decodeIDSet(from: favoriteWordIDsRaw)
-            },
-            set: { newSet in
-                favoriteWordIDsRaw = encodeIDSet(newSet)
-            }
+            get: { decodeIDSet(from: favoriteWordIDsRaw) },
+            set: { favoriteWordIDsRaw = encodeIDSet($0) }
         )
     }
     
     private var wantToLearnIDs: Binding<Set<Int>> {
         Binding(
-            get: {
-                decodeIDSet(from: wantToLearnIDsRaw)
-            },
-            set: { newSet in
-                wantToLearnIDsRaw = encodeIDSet(newSet)
-            }
+            get: { decodeIDSet(from: wantToLearnIDsRaw) },
+            set: { wantToLearnIDsRaw = encodeIDSet($0) }
+        )
+    }
+    
+    private var seenWordIDs: Binding<Set<Int>> {
+        Binding(
+            get: { decodeIDSet(from: seenWordIDsRaw) },
+            set: { seenWordIDsRaw = encodeIDSet($0) }
         )
     }
     
     var body: some View {
         TabView {
             HomeFeedView(
-                words: words,
+                allWords: allWords,
                 favoriteWordIDs: favoriteWordIDs,
-                wantToLearnIDs: wantToLearnIDs
+                wantToLearnIDs: wantToLearnIDs,
+                seenWordIDs: seenWordIDs
             )
             .tabItem {
                 Label("Words", systemImage: "text.book.closed")
             }
             
             ProfileSectionView(
-                words: words,
+                words: allWords,
                 favoriteWordIDs: favoriteWordIDs,
                 wantToLearnIDs: wantToLearnIDs
             )
@@ -82,16 +88,19 @@ struct ContentView: View {
 }
 
 struct HomeFeedView: View {
-    let words: [WordItem]
+    let allWords: [WordItem]
     @Binding var favoriteWordIDs: Set<Int>
     @Binding var wantToLearnIDs: Set<Int>
+    @Binding var seenWordIDs: Set<Int>
+    
+    @State private var feedWords: [WordItem] = []
     @State private var selectedWordForDetails: WordItem?
     
     var body: some View {
         GeometryReader { proxy in
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(spacing: 0) {
-                    ForEach(words) { item in
+                    ForEach(feedWords) { item in
                         VStack(spacing: 14) {
                             Spacer()
                             
@@ -117,7 +126,7 @@ struct HomeFeedView: View {
                                 .padding(.horizontal, 36)
                                 .padding(.top, 16)
                             
-                            HStack(spacing: 24) {
+                            HStack(spacing: 18) {
                                 ActionPillButton(
                                     systemName: favoriteWordIDs.contains(item.id) ? "heart.fill" : "heart",
                                     iconColor: favoriteWordIDs.contains(item.id) ? .red : .white.opacity(0.7),
@@ -144,12 +153,24 @@ struct HomeFeedView: View {
                                     HapticManager.impact(style: .medium)
                                     toggleMembership(id: item.id, set: &wantToLearnIDs)
                                 }
+                                
+                                ActionPillButton(
+                                    systemName: "square.and.arrow.up",
+                                    iconColor: .white.opacity(0.85),
+                                    isActive: false
+                                ) {
+                                    HapticManager.impact(style: .medium)
+                                    SharePresenter.presentShareSheet(word: item)
+                                }
                             }
                             .padding(.top, 28)
                             
                             Spacer()
                         }
                         .frame(width: proxy.size.width, height: proxy.size.height)
+                        .onAppear {
+                            markAsSeen(id: item.id)
+                        }
                     }
                 }
             }
@@ -160,6 +181,27 @@ struct HomeFeedView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+            .onAppear {
+                prepareFeed()
+            }
+        }
+    }
+    
+    private func prepareFeed() {
+        guard feedWords.isEmpty else { return }
+        var unseenWords = allWords.filter { !seenWordIDs.contains($0.id) }
+        
+        if unseenWords.isEmpty && !allWords.isEmpty {
+            seenWordIDs.removeAll()
+            unseenWords = allWords
+        }
+        
+        feedWords = unseenWords.shuffled()
+    }
+    
+    private func markAsSeen(id: Int) {
+        if !seenWordIDs.contains(id) {
+            seenWordIDs.insert(id)
         }
     }
     
@@ -171,6 +213,7 @@ struct HomeFeedView: View {
                 set.insert(id)
             }
         }
+        WidgetCenter.shared.reloadTimelines(ofKind: "QazaqVocabWidget")
     }
 }
 
@@ -185,14 +228,14 @@ struct ActionPillButton: View {
             ZStack {
                 Circle()
                     .fill(Color(red: 0.18, green: 0.18, blue: 0.18))
-                    .frame(width: 52, height: 52)
+                    .frame(width: 50, height: 50)
                     .overlay(
                         Circle()
                             .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
                     )
                 
                 Image(systemName: systemName)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: 19, weight: .semibold))
                     .foregroundStyle(iconColor)
                     .scaleEffect(isActive ? 1.15 : 1.0)
             }

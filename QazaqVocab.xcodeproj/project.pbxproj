@@ -65,6 +65,13 @@
 			);
 			target = 3E6FDF653041337100CE338B /* QazaqVocabWidgetExtension */;
 		};
+		3E6FDF9D304140DE00CE338B /* Exceptions for "QazaqVocab" folder in "QazaqVocab" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3EE51A13303F158600F249C1 /* QazaqVocab */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -79,6 +86,7 @@
 		3EE51A16303F158600F249C1 /* QazaqVocab */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				3E6FDF9D304140DE00CE338B /* Exceptions for "QazaqVocab" folder in "QazaqVocab" target */,
 				3E6FDF80304133F100CE338B /* Exceptions for "QazaqVocab" folder in "QazaqVocabWidgetExtension" target */,
 			);
 			path = QazaqVocab;
@@ -463,6 +471,9 @@
 				DEVELOPMENT_TEAM = K5W5NZJQFZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = QazaqVocab/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We need access to save word cards directly to your Photos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -496,6 +507,9 @@
 				DEVELOPMENT_TEAM = K5W5NZJQFZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = QazaqVocab/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We need access to save word cards directly to your Photos.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
