@@ -8,22 +8,94 @@
 
 /* Begin PBXBuildFile section */
 		3E283C85303F6B7200185979 /* DataLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E283C84303F6B7200185979 /* DataLoader.swift */; };
+		3E6FDF693041337100CE338B /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E6FDF683041337100CE338B /* WidgetKit.framework */; };
+		3E6FDF6B3041337100CE338B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E6FDF6A3041337100CE338B /* SwiftUI.framework */; };
+		3E6FDF783041337200CE338B /* QazaqVocabWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3E6FDF663041337100CE338B /* QazaqVocabWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3E6FDF7E304133E000CE338B /* DataLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E283C84303F6B7200185979 /* DataLoader.swift */; };
+		3E6FDF843041352800CE338B /* SharedDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6FDF833041352800CE338B /* SharedDataManager.swift */; };
+		3E6FDF853041352800CE338B /* SharedDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6FDF833041352800CE338B /* SharedDataManager.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3E6FDF763041337200CE338B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3EE51A0C303F158600F249C1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3E6FDF653041337100CE338B;
+			remoteInfo = QazaqVocabWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3E6FDF793041337200CE338B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				3E6FDF783041337200CE338B /* QazaqVocabWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		3E283C84303F6B7200185979 /* DataLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataLoader.swift; sourceTree = "<group>"; };
+		3E6FDF663041337100CE338B /* QazaqVocabWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = QazaqVocabWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E6FDF683041337100CE338B /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		3E6FDF6A3041337100CE338B /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		3E6FDF82304134E000CE338B /* QazaqVocabWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = QazaqVocabWidgetExtension.entitlements; sourceTree = "<group>"; };
+		3E6FDF833041352800CE338B /* SharedDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDataManager.swift; sourceTree = "<group>"; };
 		3EE51A14303F158600F249C1 /* QazaqVocab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QazaqVocab.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3E6FDF7C3041337200CE338B /* Exceptions for "QazaqVocabWidget" folder in "QazaqVocabWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3E6FDF653041337100CE338B /* QazaqVocabWidgetExtension */;
+		};
+		3E6FDF80304133F100CE338B /* Exceptions for "QazaqVocab" folder in "QazaqVocabWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				words.json,
+			);
+			target = 3E6FDF653041337100CE338B /* QazaqVocabWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		3E6FDF6C3041337100CE338B /* QazaqVocabWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3E6FDF7C3041337200CE338B /* Exceptions for "QazaqVocabWidget" folder in "QazaqVocabWidgetExtension" target */,
+			);
+			path = QazaqVocabWidget;
+			sourceTree = "<group>";
+		};
 		3EE51A16303F158600F249C1 /* QazaqVocab */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3E6FDF80304133F100CE338B /* Exceptions for "QazaqVocab" folder in "QazaqVocabWidgetExtension" target */,
+			);
 			path = QazaqVocab;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3E6FDF633041337100CE338B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E6FDF6B3041337100CE338B /* SwiftUI.framework in Frameworks */,
+				3E6FDF693041337100CE338B /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3EE51A11303F158600F249C1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -34,11 +106,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3E6FDF673041337100CE338B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				3E6FDF683041337100CE338B /* WidgetKit.framework */,
+				3E6FDF6A3041337100CE338B /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		3EE51A0B303F158600F249C1 = {
 			isa = PBXGroup;
 			children = (
+				3E6FDF833041352800CE338B /* SharedDataManager.swift */,
+				3E6FDF82304134E000CE338B /* QazaqVocabWidgetExtension.entitlements */,
 				3E283C84303F6B7200185979 /* DataLoader.swift */,
 				3EE51A16303F158600F249C1 /* QazaqVocab */,
+				3E6FDF6C3041337100CE338B /* QazaqVocabWidget */,
+				3E6FDF673041337100CE338B /* Frameworks */,
 				3EE51A15303F158600F249C1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -47,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				3EE51A14303F158600F249C1 /* QazaqVocab.app */,
+				3E6FDF663041337100CE338B /* QazaqVocabWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -54,6 +140,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3E6FDF653041337100CE338B /* QazaqVocabWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3E6FDF7D3041337200CE338B /* Build configuration list for PBXNativeTarget "QazaqVocabWidgetExtension" */;
+			buildPhases = (
+				3E6FDF623041337100CE338B /* Sources */,
+				3E6FDF633041337100CE338B /* Frameworks */,
+				3E6FDF643041337100CE338B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				3E6FDF6C3041337100CE338B /* QazaqVocabWidget */,
+			);
+			name = QazaqVocabWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = QazaqVocabWidgetExtension;
+			productReference = 3E6FDF663041337100CE338B /* QazaqVocabWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		3EE51A13303F158600F249C1 /* QazaqVocab */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3EE51A1F303F158700F249C1 /* Build configuration list for PBXNativeTarget "QazaqVocab" */;
@@ -61,10 +169,12 @@
 				3EE51A10303F158600F249C1 /* Sources */,
 				3EE51A11303F158600F249C1 /* Frameworks */,
 				3EE51A12303F158600F249C1 /* Resources */,
+				3E6FDF793041337200CE338B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				3E6FDF773041337200CE338B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3EE51A16303F158600F249C1 /* QazaqVocab */,
@@ -86,6 +196,9 @@
 				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					3E6FDF653041337100CE338B = {
+						CreatedOnToolsVersion = 26.6;
+					};
 					3EE51A13303F158600F249C1 = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -106,11 +219,19 @@
 			projectRoot = "";
 			targets = (
 				3EE51A13303F158600F249C1 /* QazaqVocab */,
+				3E6FDF653041337100CE338B /* QazaqVocabWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		3E6FDF643041337100CE338B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3EE51A12303F158600F249C1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -121,17 +242,97 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		3E6FDF623041337100CE338B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E6FDF843041352800CE338B /* SharedDataManager.swift in Sources */,
+				3E6FDF7E304133E000CE338B /* DataLoader.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3EE51A10303F158600F249C1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3E6FDF853041352800CE338B /* SharedDataManager.swift in Sources */,
 				3E283C85303F6B7200185979 /* DataLoader.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		3E6FDF773041337200CE338B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3E6FDF653041337100CE338B /* QazaqVocabWidgetExtension */;
+			targetProxy = 3E6FDF763041337200CE338B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		3E6FDF7A3041337200CE338B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = QazaqVocabWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K5W5NZJQFZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = QazaqVocabWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = QazaqVocabWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.beksultan.QazaqVocab.QazaqVocabWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		3E6FDF7B3041337200CE338B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = QazaqVocabWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K5W5NZJQFZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = QazaqVocabWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = QazaqVocabWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.beksultan.QazaqVocab.QazaqVocabWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		3EE51A1D303F158700F249C1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -256,6 +457,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = QazaqVocab/QazaqVocab.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K5W5NZJQFZ;
@@ -288,6 +490,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = QazaqVocab/QazaqVocab.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K5W5NZJQFZ;
@@ -318,6 +521,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		3E6FDF7D3041337200CE338B /* Build configuration list for PBXNativeTarget "QazaqVocabWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3E6FDF7A3041337200CE338B /* Debug */,
+				3E6FDF7B3041337200CE338B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		3EE51A0F303F158600F249C1 /* Build configuration list for PBXProject "QazaqVocab" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

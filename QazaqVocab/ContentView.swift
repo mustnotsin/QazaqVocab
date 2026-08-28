@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import WidgetKit
 
 struct HapticManager {
     static func impact(style: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
@@ -58,6 +59,9 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            WidgetCenter.shared.reloadTimelines(ofKind: "QazaqVocabWidget")
+        }
     }
     
     private func decodeIDSet(from raw: String) -> Set<Int> {
