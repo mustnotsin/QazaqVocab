@@ -333,6 +333,7 @@ struct ProfileSectionView: View {
     @Binding var favoriteWordIDs: Set<Int>
     @Binding var wantToLearnIDs: Set<Int>
     @State private var selectedTab: Int = 0
+    @State private var isQuizPresented: Bool = false
     
     private var favoriteWords: [WordItem] {
         words.filter { favoriteWordIDs.contains($0.id) }
@@ -373,6 +374,28 @@ struct ProfileSectionView: View {
                 .padding(.horizontal)
                 .padding(.top, 16)
                 
+                if selectedTab == 1 && !wantToLearnWords.isEmpty {
+                    Button(action: {
+                        HapticManager.impact(style: .medium)
+                        isQuizPresented = true
+                    }) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "sparkles.rectangle.stack.fill")
+                                .font(.headline)
+                            Text("Start Flashcard Quiz (\(wantToLearnWords.count))")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundStyle(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.yellow)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .padding(.horizontal)
+                    .buttonStyle(.plain)
+                }
+                
                 let activeList = selectedTab == 0 ? favoriteWords : wantToLearnWords
                 let emptyMessage = selectedTab == 0 ? "No favorite words added yet" : "No words marked to learn yet"
                 
@@ -411,7 +434,217 @@ struct ProfileSectionView: View {
             }
             .background(Color(red: 0.10, green: 0.10, blue: 0.10).ignoresSafeArea())
             .navigationTitle("Profile")
+            .sheet(isPresented: $isQuizPresented) {
+                FlashcardQuizView(deck: wantToLearnWords)
+            }
         }
+    }
+}
+
+struct FlashcardQuizView: View {
+    let deck: [WordItem]
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var currentIndex: Int = 0
+    @State private var isFlipped: Bool = false
+    @State private var masteredCount: Int = 0
+    @State private var reviewQueue: [WordItem] = []
+    
+    private var currentWord: WordItem? {
+        guard currentIndex < reviewQueue.count else { return nil }
+        return reviewQueue[currentIndex]
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color(red: 0.10, green: 0.10, blue: 0.10).ignoresSafeArea()
+                
+                if reviewQueue.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 56))
+                            .foregroundStyle(.green)
+                        
+                        Text("Session Complete!")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                        
+                        Text("Mastered \(masteredCount) of \(deck.count) words.")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.7))
+                        
+                        Button("Done") {
+                            dismiss()
+                        }
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 12)
+                        .background(Color.white)
+                        .foregroundStyle(.black)
+                        .clipShape(Capsule())
+                        .padding(.top, 12)
+                    }
+                } else if let word = currentWord {
+                    VStack(spacing: 24) {
+                        HStack {
+                            Text("Card \(currentIndex + 1) of \(reviewQueue.count)")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.white.opacity(0.5))
+                            Spacer()
+                            Text("Mastered: \(masteredCount)")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.green.opacity(0.8))
+                        }
+                        .padding(.horizontal, 28)
+                        
+                        ZStack {
+                            CardFaceView(
+                                title: word.kazakh.lowercased(),
+                                subtitle: word.partOfSpeech.lowercased(),
+                                helperText: word.phonetic.map { "/\($0)/" },
+                                prompt: "Tap to reveal translation"
+                            )
+                            .opacity(isFlipped ? 0 : 1)
+                            .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
+                            
+                            CardFaceView(
+                                title: word.translation,
+                                subtitle: word.example,
+                                helperText: word.details,
+                                prompt: "Tap to flip back"
+                            )
+                            .opacity(isFlipped ? 1 : 0)
+                            .rotation3DEffect(.degrees(isFlipped ? 0 : -180), axis: (x: 0, y: 1, z: 0))
+                        }
+                        .frame(height: 380)
+                        .padding(.horizontal, 20)
+                        .onTapGesture {
+                            HapticManager.impact(style: .light)
+                            withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
+                                isFlipped.toggle()
+                            }
+                        }
+                        
+                        HStack(spacing: 16) {
+                            Button(action: markForReview) {
+                                Label("Review Again", systemImage: "arrow.counterclockwise")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(Color(red: 0.22, green: 0.22, blue: 0.24))
+                                    .foregroundStyle(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+                            
+                            Button(action: markMastered) {
+                                Label("Mastered", systemImage: "checkmark")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(Color.green)
+                                    .foregroundStyle(.black)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .navigationTitle("Flashcards")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                    .foregroundStyle(.white.opacity(0.8))
+                }
+            }
+            .onAppear {
+                reviewQueue = deck.shuffled()
+            }
+        }
+    }
+    
+    private func markMastered() {
+        HapticManager.impact(style: .medium)
+        masteredCount += 1
+        advanceCard()
+    }
+    
+    private func markForReview() {
+        HapticManager.impact(style: .light)
+        if let word = currentWord {
+            reviewQueue.append(word)
+        }
+        advanceCard()
+    }
+    
+    private func advanceCard() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            isFlipped = false
+            currentIndex += 1
+            if currentIndex >= reviewQueue.count {
+                reviewQueue.removeAll()
+            }
+        }
+    }
+}
+
+struct CardFaceView: View {
+    let title: String
+    let subtitle: String
+    let helperText: String?
+    let prompt: String
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Spacer()
+            
+            Text(title)
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+            
+            Text(subtitle)
+                .font(.subheadline)
+                .italic()
+                .foregroundStyle(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 16)
+            
+            if let helper = helperText {
+                Text(helper)
+                    .font(.footnote)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+            }
+            
+            Spacer()
+            
+            Text(prompt)
+                .font(.caption2)
+                .fontWeight(.medium)
+                .textCase(.uppercase)
+                .tracking(1.2)
+                .foregroundStyle(.white.opacity(0.35))
+                .padding(.bottom, 8)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(red: 0.16, green: 0.16, blue: 0.18))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
     }
 }
 
