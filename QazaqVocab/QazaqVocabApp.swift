@@ -54,6 +54,8 @@ struct QazaqVocabApp: App {
                 .onOpenURL { url in
                     if ExperienceEngine.isFeaturedWordDeepLink(url) {
                         AppNavigationState.shared.navigateToFeaturedWord()
+                    } else if ExperienceEngine.isSettingsDeepLink(url) {
+                        AppNavigationState.shared.isSettingsPresented = true
                     }
                 }
         }

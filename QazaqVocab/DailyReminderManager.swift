@@ -152,4 +152,9 @@ final class DailyReminderManager {
             cancelReminders()
         }
     }
+    
+    /// Queries the current notification authorization status through the scheduling client.
+    func authorizationStatus() async -> UNAuthorizationStatus {
+        await client.authorizationStatus()
+    }
 }

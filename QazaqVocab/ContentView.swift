@@ -73,6 +73,13 @@ struct ContentView: View {
                     .tag(AppTab.saved)
                 }
                 .tint(QazaqTheme.Colors.steppeGold)
+                .sheet(isPresented: $navigationState.isSettingsPresented) {
+                    SettingsView(
+                        allWordsCount: allWords.isEmpty ? 30 : allWords.count,
+                        seenWordsCount: seenWordIDs.wrappedValue.count,
+                        savedWordsCount: savedWordIDs.wrappedValue.count
+                    )
+                }
             }
         }
         .preferredColorScheme(.dark)
@@ -362,6 +369,30 @@ struct HomeFeedView: View {
             }
             .onChange(of: allWords) { _, _ in
                 prepareFeed(force: true)
+            }
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    HapticManager.impact(style: .light)
+                    AppNavigationState.shared.isSettingsPresented = true
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(QazaqTheme.Colors.pillSurface)
+                            .frame(width: 40, height: 40)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
+                            )
+                        
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(Color.white.opacity(0.85))
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Настройки")
+                .padding(.trailing, 20)
+                .padding(.top, 8)
             }
         }
     }
@@ -717,6 +748,19 @@ struct SavedSectionView: View {
             }
             .background(QazaqTheme.Colors.background.ignoresSafeArea())
             .navigationTitle("Сохранённое")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        HapticManager.impact(style: .light)
+                        AppNavigationState.shared.isSettingsPresented = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(Color.white.opacity(0.85))
+                    }
+                    .accessibilityLabel("Настройки")
+                }
+            }
             .sheet(item: $selectedWordForDetails) { word in
                 WordDetailSheet(word: word, savedWordIDs: $savedWordIDs)
                     .presentationDetents([.medium, .large])

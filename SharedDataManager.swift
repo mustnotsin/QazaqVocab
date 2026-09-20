@@ -53,6 +53,19 @@ enum ExperienceEngine {
         return host == deepLinkFeaturedHost || path == deepLinkFeaturedHost
     }
     
+    static let deepLinkSettingsHost = "settings"
+    static let settingsURL = URL(string: "\(deepLinkScheme)://\(deepLinkSettingsHost)")!
+    
+    /// Validates whether an incoming URL targets Settings.
+    static func isSettingsDeepLink(_ url: URL) -> Bool {
+        guard let scheme = url.scheme, scheme.lowercased() == deepLinkScheme.lowercased() else {
+            return false
+        }
+        let host = url.host?.lowercased() ?? ""
+        let path = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
+        return host == deepLinkSettingsHost || path == deepLinkSettingsHost
+    }
+    
     /// Returns the featured entry for a given date from the pool, falling back to `fallbackEntry` if the pool is empty.
     static func featuredEntryOrDefault(
         from pool: [WordItem],
