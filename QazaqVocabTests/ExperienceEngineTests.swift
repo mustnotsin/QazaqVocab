@@ -249,8 +249,6 @@ final class ExperienceEngineTests: XCTestCase {
         testDefaults.removeObject(forKey: ExperienceEngine.hasMigratedSavedWordsKey)
         
         // Populate legacy data
-        let legacyFavorites = [1, 2, 3]
-        let legacyWantToLearn = [2, 3, 4, 5]
         testDefaults.set("[1, 2, 3]", forKey: ExperienceEngine.legacyFavoriteWordIDsKey)
         testDefaults.set("[2, 3, 4, 5]", forKey: ExperienceEngine.legacyWantToLearnIDsKey)
         
@@ -756,6 +754,224 @@ final class ExperienceEngineTests: XCTestCase {
         case .failure(let error):
             XCTFail("Failed to load expressive/cultural entries: \(error)")
         }
+    }
+    
+    // MARK: - Issue #9: Assemble the approved TestFlight collection
+    
+    // Acceptance Criteria 1, 4 & 7: Bundled collection contains exactly 30 entries with unique IDs, passes validation, no duplicates
+    func testBundledCollection_containsExactly30UniqueEntriesAndNoDuplicates() {
+        let words = loadWords()
+        XCTAssertEqual(words.count, 30, "The bundled TestFlight collection must contain exactly 30 entries")
+        
+        let ids = words.map(\.id)
+        let uniqueIDs = Set(ids)
+        XCTAssertEqual(uniqueIDs.count, 30, "Every entry must have a unique identifier")
+        XCTAssertEqual(ids, Array(1...30), "IDs must be sequential from 1 to 30")
+        
+        let kazakhWords = words.map(\.kazakh)
+        let uniqueWords = Set(kazakhWords)
+        XCTAssertEqual(uniqueWords.count, 30, "All 30 entries must be distinct Kazakh words")
+        
+        // Acceptance Criterion 4: No duplicate parasat remains
+        let parasatMatches = words.filter { $0.kazakh == "парасат" }
+        XCTAssertEqual(parasatMatches.count, 1, "There must be exactly one 'парасат' entry")
+        XCTAssertEqual(parasatMatches.first?.id, 21, "'парасат' must be entry ID 21 from the approved expressive/cultural collection")
+        
+        // Acceptance Criterion 7: Collection-wide automated validation passes
+        XCTAssertNoThrow(try VocabularyValidator.validate(collection: words), "Bundled collection must pass full structural validation")
+    }
+    
+    // Acceptance Criterion 2: Contains exactly 10 basic, 10 conversational, and 10 expressive/cultural approved entries
+    func testBundledCollection_containsExactCuratedMix() throws {
+        let words = loadWords()
+        XCTAssertEqual(words.count, 30)
+        
+        let projectRoot = URL(fileURLWithPath: #file)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        
+        let basicURL = projectRoot.appendingPathComponent("QazaqVocab/CuratedContent/basic_everyday.json")
+        let convURL = projectRoot.appendingPathComponent("QazaqVocab/CuratedContent/conversational.json")
+        let exprURL = projectRoot.appendingPathComponent("QazaqVocab/CuratedContent/expressive_cultural.json")
+        
+        guard case .success(let basicItems) = VocabularyLoader.load(from: basicURL),
+              case .success(let convItems) = VocabularyLoader.load(from: convURL),
+              case .success(let exprItems) = VocabularyLoader.load(from: exprURL) else {
+            XCTFail("Failed to load source curated collections")
+            return
+        }
+        
+        XCTAssertEqual(basicItems.count, 10)
+        XCTAssertEqual(convItems.count, 10)
+        XCTAssertEqual(exprItems.count, 10)
+        
+        // Check slice 0..<10 matches basic_everyday
+        let basicSlice = Array(words[0..<10])
+        XCTAssertEqual(basicSlice, basicItems, "First 10 entries must match curated basic everyday entries")
+        
+        // Check slice 10..<20 matches conversational
+        let convSlice = Array(words[10..<20])
+        XCTAssertEqual(convSlice, convItems, "Middle 10 entries must match curated conversational entries")
+        
+        // Check slice 20..<30 matches expressive_cultural
+        let exprSlice = Array(words[20..<30])
+        XCTAssertEqual(exprSlice, exprItems, "Last 10 entries must match curated expressive/cultural entries")
+    }
+    
+    // Acceptance Criterion 3: Every required Russian/Kazakh field is complete and structurally valid
+    func testBundledCollection_allFieldsCompleteAndStructurallyValid() {
+        let words = loadWords()
+        
+        for item in words {
+            // Kazakh & transliteration
+            XCTAssertFalse(item.kazakh.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertFalse(item.transliteration.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            
+            // Russian grammatical & meaning fields
+            XCTAssertFalse(item.partOfSpeech.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertFalse(item.meaning.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            
+            // Primary bilingual example
+            XCTAssertFalse(item.primaryExample.kazakh.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertFalse(item.primaryExample.russian.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            
+            // Usage explanation
+            XCTAssertNotNil(item.usageExplanation)
+            XCTAssertFalse(item.usageExplanation!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            
+            // Additional bilingual examples (at most 2)
+            if let additionals = item.additionalExamples {
+                XCTAssertLessThanOrEqual(additionals.count, 2)
+                for ex in additionals {
+                    XCTAssertFalse(ex.kazakh.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    XCTAssertFalse(ex.russian.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+    
+    // Acceptance Criterion 5: No English-first or unapproved placeholder content remains
+    func testBundledCollection_noEnglishOrPlaceholderContent() {
+        let words = loadWords()
+        
+        // English words that previously occurred in unapproved/legacy placeholders
+        let forbiddenPlaceholders = [
+            "Ray of light",
+            "Beam",
+            "lorem",
+            "placeholder",
+            "зат есім" // Old Kazakh grammatical POS label replaced by Russian-first 'существительное'
+        ]
+        
+        for item in words {
+            for forbidden in forbiddenPlaceholders {
+                XCTAssertFalse(
+                    item.meaning.localizedCaseInsensitiveContains(forbidden),
+                    "Entry \(item.id) meaning contains forbidden placeholder: \(forbidden)"
+                )
+                XCTAssertFalse(
+                    item.partOfSpeech.localizedCaseInsensitiveContains(forbidden),
+                    "Entry \(item.id) partOfSpeech contains forbidden placeholder: \(forbidden)"
+                )
+                XCTAssertFalse(
+                    item.primaryExample.russian.localizedCaseInsensitiveContains(forbidden),
+                    "Entry \(item.id) example translation contains forbidden placeholder: \(forbidden)"
+                )
+            }
+        }
+    }
+    
+    // Acceptance Criterion 6: Complete collection works with featured selection, feed progression, persistence, and completion
+    func testBundledCollection_worksWithEngineFlows() {
+        let testSuiteName = "test.assembled.collection.suite"
+        let defaults = UserDefaults(suiteName: testSuiteName)!
+        defaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+        defaults.removeObject(forKey: ExperienceEngine.seenWordIDsKey)
+        defaults.removeObject(forKey: ExperienceEngine.discoveryFeedOrderKey)
+        defaults.removeObject(forKey: ExperienceEngine.isCollectionCompletedKey)
+        defaults.removeObject(forKey: ExperienceEngine.isReminderEligibleKey)
+        
+        let words = loadWords()
+        XCTAssertEqual(words.count, 30)
+        
+        // 1. Featured-word selection rotates deterministically across 30 days
+        var selectedFeaturedIDs = Set<Int>()
+        let calendar = Calendar.current
+        let baseDate = calendar.startOfDay(for: Date())
+        for dayOffset in 0..<30 {
+            guard let date = calendar.date(byAdding: .day, value: dayOffset, to: baseDate),
+                  let featured = ExperienceEngine.featuredEntry(from: words, for: date, in: calendar) else {
+                XCTFail("Featured entry should exist for day \(dayOffset)")
+                continue
+            }
+            selectedFeaturedIDs.insert(featured.id)
+        }
+        XCTAssertEqual(selectedFeaturedIDs.count, 30, "30 distinct calendar days must rotate through all 30 pool entries")
+        
+        // 2. Shuffled feed contains all 30 entries exactly once and persists
+        let feedOrder = ExperienceEngine.getOrInitializeDiscoveryFeedOrder(from: words, defaults: defaults)
+        XCTAssertEqual(feedOrder.count, 30)
+        XCTAssertEqual(Set(feedOrder).count, 30)
+        
+        let reloadedOrder = ExperienceEngine.getOrInitializeDiscoveryFeedOrder(from: words, defaults: defaults)
+        XCTAssertEqual(feedOrder, reloadedOrder, "Persisted order must remain consistent on relaunch")
+        
+        // 3. Featured entry appears first without duplicating remaining unseen entries
+        let todayFeatured = ExperienceEngine.featuredEntry(from: words, for: baseDate, in: calendar)!
+        let feedInitial = ExperienceEngine.prepareDiscoveryFeed(
+            from: words,
+            featuredEntry: todayFeatured,
+            feedOrder: feedOrder,
+            seenIDs: []
+        )
+        XCTAssertEqual(feedInitial.count, 30)
+        XCTAssertEqual(feedInitial.first?.id, todayFeatured.id)
+        XCTAssertEqual(Set(feedInitial.map(\.id)).count, 30)
+        
+        // 4. Progressive seen tracking until collection completion
+        var seenIDs = Set<Int>()
+        for step in 1...29 {
+            seenIDs.insert(feedOrder[step - 1])
+            let currentFeed = ExperienceEngine.prepareDiscoveryFeed(
+                from: words,
+                featuredEntry: todayFeatured,
+                feedOrder: feedOrder,
+                seenIDs: seenIDs
+            )
+            // Featured word stays at index 0, remaining unseen entries decrease
+            XCTAssertFalse(currentFeed.isEmpty)
+        }
+        
+        // Mark all seen
+        seenIDs = Set(feedOrder)
+        let endFeed = ExperienceEngine.prepareDiscoveryFeed(
+            from: words,
+            featuredEntry: todayFeatured,
+            feedOrder: feedOrder,
+            seenIDs: seenIDs
+        )
+        // Only today's featured word remains visible in the feed
+        XCTAssertEqual(endFeed.count, 1)
+        XCTAssertEqual(endFeed.first?.id, todayFeatured.id)
+        
+        // Mark completion
+        ExperienceEngine.markCollectionCompleted(in: defaults)
+        XCTAssertTrue(ExperienceEngine.isCollectionCompleted(in: defaults))
+        XCTAssertFalse(ExperienceEngine.isReminderEligible(in: defaults))
+        
+        // 5. Saved words remain accessible
+        let savedIDs: Set<Int> = [words[0].id, words[14].id, words[29].id]
+        ExperienceEngine.saveSavedWordIDs(savedIDs, in: defaults)
+        let savedList = ExperienceEngine.filterSavedWords(from: words, savedIDs: ExperienceEngine.getSavedWordIDs(from: defaults))
+        XCTAssertEqual(savedList.count, 3)
+        XCTAssertEqual(savedList.map(\.id), [words[0].id, words[14].id, words[29].id])
+        
+        // Cleanup
+        defaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+        defaults.removeObject(forKey: ExperienceEngine.seenWordIDsKey)
+        defaults.removeObject(forKey: ExperienceEngine.discoveryFeedOrderKey)
+        defaults.removeObject(forKey: ExperienceEngine.isCollectionCompletedKey)
+        defaults.removeObject(forKey: ExperienceEngine.isReminderEligibleKey)
     }
 }
 

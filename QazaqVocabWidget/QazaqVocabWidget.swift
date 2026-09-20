@@ -12,12 +12,15 @@ struct Provider: TimelineProvider {
     private var fallbackWord: WordItem {
         words.first ?? WordItem(
             id: 1,
-            kazakh: "сәуле",
-            partOfSpeech: "зат есім",
-            translation: "Ray of light / Beam",
-            example: "Күн сәулесі бөлмеге түсті.",
-            phonetic: "säwle",
-            details: nil,
+            kazakh: "нан",
+            transliteration: "nan",
+            partOfSpeech: "существительное",
+            meaning: "Хлеб",
+            primaryExample: BilingualExample(
+                kazakh: "Дүкеннен жаңа піскен нан сатып алдық.",
+                russian: "Мы купили в магазине свежий хлеб."
+            ),
+            usageExplanation: "Базовый продукт питания и символ достатка. В казахской традиции к хлебу относятся с особым почтением: его не бросают и не кладут вверх дном.",
             additionalExamples: nil
         )
     }
