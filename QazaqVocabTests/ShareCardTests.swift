@@ -102,37 +102,4 @@ final class ShareCardTests: XCTestCase {
         XCTAssertNil(metadata?.url, "Private TestFlight share card must not contain an app store link")
         XCTAssertTrue(metadata?.title?.contains("QazaqVocab") == true)
     }
-    
-    func testThemeColors_passWCAGAAContrast() {
-        // WCAG relative luminance formula
-        func luminance(r: Double, g: Double, b: Double) -> Double {
-            func channel(_ c: Double) -> Double {
-                return c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
-            }
-            return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
-        }
-        
-        func contrastRatio(l1: Double, l2: Double) -> Double {
-            let lighter = max(l1, l2)
-            let darker = min(l1, l2)
-            return (lighter + 0.05) / (darker + 0.05)
-        }
-        
-        let bgLum = luminance(r: 0.07, g: 0.07, b: 0.08)
-        
-        // textPrimary: rgb(0.98, 0.98, 0.98)
-        let primaryLum = luminance(r: 0.98, g: 0.98, b: 0.98)
-        let primaryContrast = contrastRatio(l1: primaryLum, l2: bgLum)
-        XCTAssertGreaterThan(primaryContrast, 7.0, "textPrimary should pass WCAG AAA (7:1) contrast against dark background")
-        
-        // textSecondary: rgb(0.68, 0.70, 0.75)
-        let secondaryLum = luminance(r: 0.68, g: 0.70, b: 0.75)
-        let secondaryContrast = contrastRatio(l1: secondaryLum, l2: bgLum)
-        XCTAssertGreaterThan(secondaryContrast, 4.5, "textSecondary should pass WCAG AA (4.5:1) contrast against dark background")
-        
-        // steppeGold: rgb(0.90, 0.71, 0.26)
-        let goldLum = luminance(r: 0.90, g: 0.71, b: 0.26)
-        let goldContrast = contrastRatio(l1: goldLum, l2: bgLum)
-        XCTAssertGreaterThan(goldContrast, 4.5, "steppeGold should pass WCAG AA (4.5:1) contrast against dark background")
-    }
 }

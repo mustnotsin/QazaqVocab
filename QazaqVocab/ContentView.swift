@@ -115,6 +115,9 @@ struct ContentErrorView: View {
     let error: ContentLoadingError
     let onRetry: () -> Void
     
+    @ScaledMetric(relativeTo: .title2) private var titleSize: CGFloat = 22
+    @ScaledMetric(relativeTo: .body) private var messageSize: CGFloat = 15
+    
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -135,13 +138,13 @@ struct ContentErrorView: View {
             .accessibilityHidden(true)
             
             Text("Не удалось загрузить слова")
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .font(.system(size: titleSize, weight: .semibold, design: .rounded))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.white.opacity(0.95))
                 .padding(.horizontal, 32)
             
             Text(error.localizedDescription)
-                .font(.system(size: 15))
+                .font(.system(size: messageSize))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(QazaqTheme.Colors.textSecondary)
                 .lineSpacing(4)
@@ -152,7 +155,7 @@ struct ContentErrorView: View {
                 onRetry()
             } label: {
                 Text("Повторить попытку")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.headline)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 28)
                     .padding(.vertical, 14)
@@ -212,6 +215,10 @@ struct HomeFeedView: View {
     @State private var feedItems: [FeedItem] = []
     @State private var selectedWordForDetails: WordItem?
     
+    @ScaledMetric(relativeTo: .largeTitle) private var wordFontSize: CGFloat = 46
+    @ScaledMetric(relativeTo: .subheadline) private var posFontSize: CGFloat = 16
+    @ScaledMetric(relativeTo: .title3) private var meaningFontSize: CGFloat = 20
+    
     var body: some View {
         GeometryReader { proxy in
             ScrollViewReader { scrollProxy in
@@ -226,7 +233,7 @@ struct HomeFeedView: View {
                                         
                                         // Kazakh Word
                                         Text(item.kazakh.lowercased())
-                                            .font(.system(size: 46, weight: .bold, design: .rounded))
+                                            .font(.system(size: wordFontSize, weight: .bold, design: .rounded))
                                             .foregroundStyle(QazaqTheme.Colors.textPrimary)
                                             .multilineTextAlignment(.center)
                                             .lineLimit(2)
@@ -235,14 +242,13 @@ struct HomeFeedView: View {
                                         
                                         // Part of speech
                                         Text(item.partOfSpeech.lowercased())
-                                            .font(.system(size: 16, weight: .medium))
+                                            .font(.system(size: posFontSize, weight: .medium))
                                             .italic()
                                             .foregroundStyle(QazaqTheme.Colors.textSecondary)
                                         
                                         // Russian Meaning
                                         Text(item.meaning)
-                                            .font(.title3)
-                                            .fontWeight(.medium)
+                                            .font(.system(size: meaningFontSize, weight: .medium))
                                             .foregroundStyle(Color.white.opacity(0.92))
                                             .multilineTextAlignment(.center)
                                             .lineLimit(3)
@@ -411,6 +417,9 @@ struct HomeFeedView: View {
 struct CompletionCardView: View {
     let onAppearAction: () -> Void
     
+    @ScaledMetric(relativeTo: .title2) private var titleFontSize: CGFloat = 22
+    @ScaledMetric(relativeTo: .body) private var bodyFontSize: CGFloat = 15
+    
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -429,14 +438,14 @@ struct CompletionCardView: View {
             .accessibilityHidden(true)
             
             Text(ExperienceEngine.completionMessage)
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .font(.system(size: titleFontSize, weight: .semibold, design: .rounded))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.white.opacity(0.95))
                 .lineSpacing(6)
                 .padding(.horizontal, 32)
             
             Text("Все слова первой версии пройдены. Сохранённые слова остаются доступны, а виджеты продолжат показывать новые слова каждый день.")
-                .font(.system(size: 15))
+                .font(.system(size: bodyFontSize))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(QazaqTheme.Colors.textSecondary)
                 .lineSpacing(4)
@@ -485,6 +494,9 @@ struct WordDetailSheet: View {
     let word: WordItem
     @Binding var savedWordIDs: Set<Int>
     
+    @ScaledMetric(relativeTo: .largeTitle) private var detailWordSize: CGFloat = 34
+    @ScaledMetric(relativeTo: .title3) private var detailMeaningSize: CGFloat = 20
+    
     private var isSaved: Bool {
         savedWordIDs.contains(word.id)
     }
@@ -495,7 +507,7 @@ struct WordDetailSheet: View {
                 VStack(alignment: .leading, spacing: 22) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(word.kazakh.lowercased())
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
+                            .font(.system(size: detailWordSize, weight: .bold, design: .rounded))
                             .foregroundStyle(QazaqTheme.Colors.textPrimary)
                         
                         HStack(spacing: 8) {
@@ -516,8 +528,7 @@ struct WordDetailSheet: View {
                         }
                         
                         Text(word.meaning)
-                            .font(.title3)
-                            .fontWeight(.medium)
+                            .font(.system(size: detailMeaningSize, weight: .medium))
                             .foregroundStyle(.white.opacity(0.92))
                             .padding(.top, 4)
                     }

@@ -16,6 +16,10 @@ struct FirstTimeSetupView: View {
     }()
     @State private var isProcessing: Bool = false
     
+    @ScaledMetric(relativeTo: .largeTitle) private var titleSize: CGFloat = 28
+    @ScaledMetric(relativeTo: .body) private var bodySize: CGFloat = 16
+    @ScaledMetric(relativeTo: .footnote) private var footnoteSize: CGFloat = 14
+    
     var body: some View {
         ZStack {
             QazaqTheme.Colors.background
@@ -76,19 +80,19 @@ struct FirstTimeSetupView: View {
             .accessibilityHidden(true)
             
             Text("Одно слово каждый день")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: titleSize, weight: .bold, design: .rounded))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.white)
             
             VStack(spacing: 12) {
                 Text("Каждый день в QazaqVocab открывается одно главное казахское слово с переводом на русский язык, примерами и контекстом употребления.")
-                    .font(.system(size: 16))
+                    .font(.system(size: bodySize))
                     .lineSpacing(5)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(Color.white.opacity(0.85))
                 
                 Text("Исследуйте коллекцию в комфортном темпе — без таймеров и принудительных ограничений.")
-                    .font(.system(size: 14))
+                    .font(.system(size: footnoteSize))
                     .lineSpacing(4)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(Color.white.opacity(0.55))
@@ -102,7 +106,7 @@ struct FirstTimeSetupView: View {
                 }
             } label: {
                 Text("Продолжить")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.headline)
                     .foregroundStyle(.black)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -137,12 +141,12 @@ struct FirstTimeSetupView: View {
             .accessibilityHidden(true)
             
             Text("Ежедневное напоминание")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: titleSize, weight: .bold, design: .rounded))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.white)
             
             Text("Выберите удобное время, чтобы вовремя увидеть главное слово сегодняшнего дня:")
-                .font(.system(size: 15))
+                .font(.system(size: footnoteSize))
                 .lineSpacing(4)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Color.white.opacity(0.8))
@@ -178,7 +182,7 @@ struct FirstTimeSetupView: View {
                                 .padding(.trailing, 4)
                         }
                         Text("Включить напоминания")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.headline)
                             .foregroundStyle(.black)
                     }
                     .frame(maxWidth: .infinity)
@@ -196,7 +200,7 @@ struct FirstTimeSetupView: View {
                     handleSkipReminders()
                 } label: {
                     Text("Не сейчас")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.subheadline)
                         .foregroundStyle(Color.white.opacity(0.6))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
