@@ -27,28 +27,23 @@ struct Provider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (WordEntry) -> ()) {
-        let entryWord = SharedDataManager.getDailyWord(from: words) ?? fallbackWord
+        let entryWord = ExperienceEngine.featuredEntry(from: words) ?? fallbackWord
         let entry = WordEntry(date: Date(), word: entryWord)
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        var entries: [WordEntry] = []
         let currentDate = Date()
         let calendar = Calendar.current
         
-        for hourOffset in stride(from: 0, to: 24, by: 6) {
-            guard let entryDate = calendar.date(byAdding: .hour, value: hourOffset, to: currentDate) else { continue }
-            
-            let dayOfYear = calendar.ordinality(of: .day, in: .year, for: entryDate) ?? 1
-            let calculatedIndex = (dayOfYear + (hourOffset / 6)) % max(1, words.count)
-            let wordForSlot = words.indices.contains(calculatedIndex) ? words[calculatedIndex] : fallbackWord
-            
-            entries.append(WordEntry(date: entryDate, word: wordForSlot))
-        }
-
+        let todayWord = ExperienceEngine.featuredEntry(from: words, for: currentDate, in: calendar) ?? fallbackWord
+        let todayEntry = WordEntry(date: currentDate, word: todayWord)
+        
         let nextMidnight = calendar.startOfDay(for: calendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate)
-        let timeline = Timeline(entries: entries, policy: .after(nextMidnight))
+        let tomorrowWord = ExperienceEngine.featuredEntry(from: words, for: nextMidnight, in: calendar) ?? fallbackWord
+        let tomorrowEntry = WordEntry(date: nextMidnight, word: tomorrowWord)
+        
+        let timeline = Timeline(entries: [todayEntry, tomorrowEntry], policy: .after(nextMidnight))
         completion(timeline)
     }
 }

@@ -13,13 +13,13 @@ struct HapticManager {
 struct ContentView: View {
     @State private var allWords: [WordItem] = loadWords()
     
-    @AppStorage("favorite_word_ids", store: UserDefaults(suiteName: "group.com.yourname.QazaqVocab"))
+    @AppStorage("favorite_word_ids", store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
     private var favoriteWordIDsRaw: String = "[]"
     
-    @AppStorage("want_to_learn_ids", store: UserDefaults(suiteName: "group.com.yourname.QazaqVocab"))
+    @AppStorage("want_to_learn_ids", store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
     private var wantToLearnIDsRaw: String = "[]"
     
-    @AppStorage("seen_word_ids", store: UserDefaults(suiteName: "group.com.yourname.QazaqVocab"))
+    @AppStorage("seen_word_ids", store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
     private var seenWordIDsRaw: String = "[]"
     
     private var favoriteWordIDs: Binding<Set<Int>> {
@@ -189,14 +189,15 @@ struct HomeFeedView: View {
     
     private func prepareFeed() {
         guard feedWords.isEmpty else { return }
-        var unseenWords = allWords.filter { !seenWordIDs.contains($0.id) }
-        
-        if unseenWords.isEmpty && !allWords.isEmpty {
-            seenWordIDs.removeAll()
-            unseenWords = allWords
+        let featured = ExperienceEngine.featuredEntry(from: allWords)
+        if let featured = featured {
+            ExperienceEngine.saveActiveWordID(featured.id)
         }
-        
-        feedWords = unseenWords.shuffled()
+        feedWords = ExperienceEngine.prepareWordsFeed(
+            from: allWords,
+            featuredEntry: featured,
+            seenIDs: seenWordIDs
+        )
     }
     
     private func markAsSeen(id: Int) {

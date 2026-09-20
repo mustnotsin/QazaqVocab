@@ -17,6 +17,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		3EE51A3A303F158700F249C1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3EE51A0C303F158600F249C1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3EE51A13303F158600F249C1;
+			remoteInfo = QazaqVocab;
+		};
 		3E6FDF763041337200CE338B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 3EE51A0C303F158600F249C1 /* Project object */;
@@ -41,6 +48,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3EE51A31303F158700F249C1 /* QazaqVocabTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QazaqVocabTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E283C84303F6B7200185979 /* DataLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataLoader.swift; sourceTree = "<group>"; };
 		3E6FDF663041337100CE338B /* QazaqVocabWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = QazaqVocabWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E6FDF683041337100CE338B /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -75,6 +83,13 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		3EE51A38303F158700F249C1 /* QazaqVocabTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = QazaqVocabTests;
+			sourceTree = "<group>";
+		};
 		3E6FDF6C3041337100CE338B /* QazaqVocabWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -95,6 +110,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3EE51A33303F158700F249C1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3E6FDF633041337100CE338B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -140,6 +162,7 @@
 			isa = PBXGroup;
 			children = (
 				3EE51A14303F158600F249C1 /* QazaqVocab.app */,
+				3EE51A31303F158700F249C1 /* QazaqVocabTests.xctest */,
 				3E6FDF663041337100CE338B /* QazaqVocabWidgetExtension.appex */,
 			);
 			name = Products;
@@ -148,6 +171,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3EE51A30303F158700F249C1 /* QazaqVocabTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3EE51A35303F158700F249C1 /* Build configuration list for PBXNativeTarget "QazaqVocabTests" */;
+			buildPhases = (
+				3EE51A32303F158700F249C1 /* Sources */,
+				3EE51A33303F158700F249C1 /* Frameworks */,
+				3EE51A34303F158700F249C1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3EE51A39303F158700F249C1 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				3EE51A38303F158700F249C1 /* QazaqVocabTests */,
+			);
+			name = QazaqVocabTests;
+			packageProductDependencies = (
+			);
+			productName = QazaqVocabTests;
+			productReference = 3EE51A31303F158700F249C1 /* QazaqVocabTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		3E6FDF653041337100CE338B /* QazaqVocabWidgetExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3E6FDF7D3041337200CE338B /* Build configuration list for PBXNativeTarget "QazaqVocabWidgetExtension" */;
@@ -204,6 +250,10 @@
 				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					3EE51A30303F158700F249C1 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = 3EE51A13303F158600F249C1;
+					};
 					3E6FDF653041337100CE338B = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -228,11 +278,19 @@
 			targets = (
 				3EE51A13303F158600F249C1 /* QazaqVocab */,
 				3E6FDF653041337100CE338B /* QazaqVocabWidgetExtension */,
+				3EE51A30303F158700F249C1 /* QazaqVocabTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		3EE51A34303F158700F249C1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3E6FDF643041337100CE338B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -250,6 +308,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		3EE51A32303F158700F249C1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3E6FDF623041337100CE338B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -271,6 +336,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		3EE51A39303F158700F249C1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3EE51A13303F158600F249C1 /* QazaqVocab */;
+			targetProxy = 3EE51A3A303F158700F249C1 /* PBXContainerItemProxy */;
+		};
 		3E6FDF773041337200CE338B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 3E6FDF653041337100CE338B /* QazaqVocabWidgetExtension */;
@@ -279,6 +349,40 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		3EE51A36303F158700F249C1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.beksultan.QazaqVocabTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/QazaqVocab.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/QazaqVocab";
+			};
+			name = Debug;
+		};
+		3EE51A37303F158700F249C1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.beksultan.QazaqVocabTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/QazaqVocab.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/QazaqVocab";
+			};
+			name = Release;
+		};
 		3E6FDF7A3041337200CE338B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -535,6 +639,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		3EE51A35303F158700F249C1 /* Build configuration list for PBXNativeTarget "QazaqVocabTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3EE51A36303F158700F249C1 /* Debug */,
+				3EE51A37303F158700F249C1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		3E6FDF7D3041337200CE338B /* Build configuration list for PBXNativeTarget "QazaqVocabWidgetExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
