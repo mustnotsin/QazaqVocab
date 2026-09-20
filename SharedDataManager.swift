@@ -157,6 +157,82 @@ enum ExperienceEngine {
         }
         return defaults.integer(forKey: activeWordIDKey)
     }
+    
+    // MARK: - Saved Words Management (Issue #4)
+    
+    static let savedWordIDsKey = "saved_word_ids"
+    static let legacyFavoriteWordIDsKey = "favorite_word_ids"
+    static let legacyWantToLearnIDsKey = "want_to_learn_ids"
+    static let hasMigratedSavedWordsKey = "has_migrated_saved_words"
+    
+    /// Retrieves the learner's set of saved word IDs.
+    static func getSavedWordIDs(from defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) -> Set<Int> {
+        guard let defaults = defaults,
+              let raw = defaults.string(forKey: savedWordIDsKey),
+              let data = raw.data(using: .utf8),
+              let array = try? JSONDecoder().decode([Int].self, from: data) else {
+            return []
+        }
+        return Set(array)
+    }
+    
+    /// Persists the learner's set of saved word IDs.
+    static func saveSavedWordIDs(_ ids: Set<Int>, in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) {
+        guard let defaults = defaults,
+              let data = try? JSONEncoder().encode(Array(ids)),
+              let string = String(data: data, encoding: .utf8) else {
+            return
+        }
+        defaults.set(string, forKey: savedWordIDsKey)
+    }
+    
+    /// Toggles the saved state for a word ID and returns the updated set of saved word IDs.
+    @discardableResult
+    static func toggleSavedWordID(_ id: Int, in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) -> Set<Int> {
+        var current = getSavedWordIDs(from: defaults)
+        if current.contains(id) {
+            current.remove(id)
+        } else {
+            current.insert(id)
+        }
+        saveSavedWordIDs(current, in: defaults)
+        return current
+    }
+    
+    /// Migrates existing selections from legacy Favorites and Want to Learn into Saved without duplicates.
+    @discardableResult
+    static func migrateLegacySavedSelectionsIfNeeded(defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) -> Set<Int> {
+        guard let defaults = defaults else { return [] }
+        var currentSaved = getSavedWordIDs(from: defaults)
+        
+        func decodeSet(forKey key: String) -> Set<Int> {
+            if let raw = defaults.string(forKey: key),
+               let data = raw.data(using: .utf8),
+               let array = try? JSONDecoder().decode([Int].self, from: data) {
+                return Set(array)
+            } else if let array = defaults.array(forKey: key) as? [Int] {
+                return Set(array)
+            }
+            return []
+        }
+        
+        let legacyFavorites = decodeSet(forKey: legacyFavoriteWordIDsKey)
+        let legacyWantToLearn = decodeSet(forKey: legacyWantToLearnIDsKey)
+        
+        if !legacyFavorites.isEmpty || !legacyWantToLearn.isEmpty {
+            currentSaved.formUnion(legacyFavorites)
+            currentSaved.formUnion(legacyWantToLearn)
+            saveSavedWordIDs(currentSaved, in: defaults)
+            defaults.set(true, forKey: hasMigratedSavedWordsKey)
+        }
+        
+        return currentSaved
+    }
+    
+    /// Filters and returns the vocabulary entries matching the saved word IDs.
+    static func filterSavedWords(from pool: [WordItem], savedIDs: Set<Int>) -> [WordItem] {
+        pool.filter { savedIDs.contains($0.id) }
+    }
 }
 
 struct SharedDataManager {

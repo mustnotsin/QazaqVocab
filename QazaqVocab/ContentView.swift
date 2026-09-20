@@ -13,26 +13,16 @@ struct HapticManager {
 struct ContentView: View {
     @State private var allWords: [WordItem] = loadWords()
     
-    @AppStorage("favorite_word_ids", store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
-    private var favoriteWordIDsRaw: String = "[]"
-    
-    @AppStorage("want_to_learn_ids", store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
-    private var wantToLearnIDsRaw: String = "[]"
+    @AppStorage(ExperienceEngine.savedWordIDsKey, store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
+    private var savedWordIDsRaw: String = "[]"
     
     @AppStorage("seen_word_ids", store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
     private var seenWordIDsRaw: String = "[]"
     
-    private var favoriteWordIDs: Binding<Set<Int>> {
+    private var savedWordIDs: Binding<Set<Int>> {
         Binding(
-            get: { decodeIDSet(from: favoriteWordIDsRaw) },
-            set: { favoriteWordIDsRaw = encodeIDSet($0) }
-        )
-    }
-    
-    private var wantToLearnIDs: Binding<Set<Int>> {
-        Binding(
-            get: { decodeIDSet(from: wantToLearnIDsRaw) },
-            set: { wantToLearnIDsRaw = encodeIDSet($0) }
+            get: { decodeIDSet(from: savedWordIDsRaw) },
+            set: { savedWordIDsRaw = encodeIDSet($0) }
         )
     }
     
@@ -47,25 +37,24 @@ struct ContentView: View {
         TabView {
             HomeFeedView(
                 allWords: allWords,
-                favoriteWordIDs: favoriteWordIDs,
-                wantToLearnIDs: wantToLearnIDs,
+                savedWordIDs: savedWordIDs,
                 seenWordIDs: seenWordIDs
             )
             .tabItem {
                 Label("Words", systemImage: "text.book.closed")
             }
             
-            ProfileSectionView(
+            SavedSectionView(
                 words: allWords,
-                favoriteWordIDs: favoriteWordIDs,
-                wantToLearnIDs: wantToLearnIDs
+                savedWordIDs: savedWordIDs
             )
             .tabItem {
-                Label("Profile", systemImage: "person")
+                Label("Saved", systemImage: "bookmark")
             }
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            ExperienceEngine.migrateLegacySavedSelectionsIfNeeded()
             WidgetCenter.shared.reloadTimelines(ofKind: "QazaqVocabWidget")
         }
     }
@@ -114,8 +103,7 @@ enum FeedItem: Identifiable, Equatable {
 
 struct HomeFeedView: View {
     let allWords: [WordItem]
-    @Binding var favoriteWordIDs: Set<Int>
-    @Binding var wantToLearnIDs: Set<Int>
+    @Binding var savedWordIDs: Set<Int>
     @Binding var seenWordIDs: Set<Int>
     
     @AppStorage(ExperienceEngine.isCollectionCompletedKey, store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
@@ -156,14 +144,14 @@ struct HomeFeedView: View {
                                     .padding(.horizontal, 36)
                                     .padding(.top, 16)
                                 
-                                HStack(spacing: 18) {
+                                HStack(spacing: 24) {
                                     ActionPillButton(
-                                        systemName: favoriteWordIDs.contains(item.id) ? "heart.fill" : "heart",
-                                        iconColor: favoriteWordIDs.contains(item.id) ? .red : .white.opacity(0.7),
-                                        isActive: favoriteWordIDs.contains(item.id)
+                                        systemName: savedWordIDs.contains(item.id) ? "bookmark.fill" : "bookmark",
+                                        iconColor: savedWordIDs.contains(item.id) ? Color(red: 0.95, green: 0.77, blue: 0.25) : .white.opacity(0.7),
+                                        isActive: savedWordIDs.contains(item.id)
                                     ) {
                                         HapticManager.impact(style: .medium)
-                                        toggleMembership(id: item.id, set: &favoriteWordIDs)
+                                        toggleSaved(id: item.id)
                                     }
                                     
                                     ActionPillButton(
@@ -173,15 +161,6 @@ struct HomeFeedView: View {
                                     ) {
                                         HapticManager.impact(style: .light)
                                         selectedWordForDetails = item
-                                    }
-                                    
-                                    ActionPillButton(
-                                        systemName: wantToLearnIDs.contains(item.id) ? "bookmark.fill" : "bookmark",
-                                        iconColor: wantToLearnIDs.contains(item.id) ? .yellow : .white.opacity(0.7),
-                                        isActive: wantToLearnIDs.contains(item.id)
-                                    ) {
-                                        HapticManager.impact(style: .medium)
-                                        toggleMembership(id: item.id, set: &wantToLearnIDs)
                                     }
                                     
                                     ActionPillButton(
@@ -214,7 +193,7 @@ struct HomeFeedView: View {
             .scrollTargetBehavior(.paging)
             .background(Color(red: 0.12, green: 0.12, blue: 0.12).ignoresSafeArea())
             .sheet(item: $selectedWordForDetails) { word in
-                WordDetailSheet(word: word)
+                WordDetailSheet(word: word, savedWordIDs: $savedWordIDs)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
@@ -258,12 +237,12 @@ struct HomeFeedView: View {
         }
     }
     
-    private func toggleMembership(id: Int, set: inout Set<Int>) {
+    private func toggleSaved(id: Int) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
-            if set.contains(id) {
-                set.remove(id)
+            if savedWordIDs.contains(id) {
+                savedWordIDs.remove(id)
             } else {
-                set.insert(id)
+                savedWordIDs.insert(id)
             }
         }
         WidgetCenter.shared.reloadTimelines(ofKind: "QazaqVocabWidget")
@@ -344,6 +323,11 @@ struct ActionPillButton: View {
 
 struct WordDetailSheet: View {
     let word: WordItem
+    @Binding var savedWordIDs: Set<Int>
+    
+    private var isSaved: Bool {
+        savedWordIDs.contains(word.id)
+    }
     
     var body: some View {
         NavigationStack {
@@ -422,130 +406,113 @@ struct WordDetailSheet: View {
             }
             .background(Color(red: 0.12, green: 0.12, blue: 0.12).ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        HapticManager.impact(style: .medium)
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                            if isSaved {
+                                savedWordIDs.remove(word.id)
+                            } else {
+                                savedWordIDs.insert(word.id)
+                            }
+                        }
+                        WidgetCenter.shared.reloadTimelines(ofKind: "QazaqVocabWidget")
+                    } label: {
+                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(isSaved ? Color(red: 0.95, green: 0.77, blue: 0.25) : .white.opacity(0.8))
+                    }
+                }
+            }
         }
     }
 }
 
-struct ProfileSectionView: View {
+struct SavedSectionView: View {
     let words: [WordItem]
-    @Binding var favoriteWordIDs: Set<Int>
-    @Binding var wantToLearnIDs: Set<Int>
-    @State private var selectedTab: Int = 0
+    @Binding var savedWordIDs: Set<Int>
+    @State private var selectedWordForDetails: WordItem?
     
-    private var favoriteWords: [WordItem] {
-        words.filter { favoriteWordIDs.contains($0.id) }
-    }
-    
-    private var wantToLearnWords: [WordItem] {
-        words.filter { wantToLearnIDs.contains($0.id) }
+    private var savedWords: [WordItem] {
+        ExperienceEngine.filterSavedWords(from: words, savedIDs: savedWordIDs)
     }
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                HStack(spacing: 16) {
-                    CategorySummaryCard(
-                        title: "Favorite Words",
-                        count: favoriteWords.count,
-                        icon: "heart.fill",
-                        iconColor: .red,
-                        isSelected: selectedTab == 0
-                    )
-                    .onTapGesture {
-                        HapticManager.impact(style: .light)
-                        selectedTab = 0
-                    }
-                    
-                    CategorySummaryCard(
-                        title: "Want to Learn",
-                        count: wantToLearnWords.count,
-                        icon: "bookmark.fill",
-                        iconColor: .yellow,
-                        isSelected: selectedTab == 1
-                    )
-                    .onTapGesture {
-                        HapticManager.impact(style: .light)
-                        selectedTab = 1
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 16)
-                
-                let activeList = selectedTab == 0 ? favoriteWords : wantToLearnWords
-                let emptyMessage = selectedTab == 0 ? "No favorite words added yet" : "No words marked to learn yet"
-                
-                if activeList.isEmpty {
-                    Spacer()
-                    VStack(spacing: 10) {
-                        Image(systemName: selectedTab == 0 ? "heart.slash" : "bookmark.slash")
-                            .font(.system(size: 40))
+            Group {
+                if savedWords.isEmpty {
+                    VStack(spacing: 16) {
+                        Spacer()
+                        Image(systemName: "bookmark.slash")
+                            .font(.system(size: 48))
                             .foregroundStyle(.white.opacity(0.3))
-                        Text(emptyMessage)
+                        Text("No saved words yet")
+                            .font(.headline)
+                            .foregroundStyle(.white.opacity(0.7))
+                        Text("Tap the bookmark icon on any card or in word details to save words for later.")
                             .font(.subheadline)
-                            .foregroundStyle(.white.opacity(0.5))
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.white.opacity(0.4))
+                            .padding(.horizontal, 40)
+                        Spacer()
                     }
-                    Spacer()
                 } else {
-                    List(activeList) { word in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(word.kazakh.lowercased())
-                                    .font(.headline)
-                                    .foregroundStyle(.white)
-                                Spacer()
-                                Text(word.partOfSpeech.lowercased())
-                                    .font(.caption)
-                                    .italic()
-                                    .foregroundStyle(.white.opacity(0.5))
+                    List {
+                        Section {
+                            ForEach(savedWords) { word in
+                                Button {
+                                    selectedWordForDetails = word
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        HStack {
+                                            Text(word.kazakh.lowercased())
+                                                .font(.headline)
+                                                .foregroundStyle(.white)
+                                            Spacer()
+                                            Text(word.partOfSpeech.lowercased())
+                                                .font(.caption)
+                                                .italic()
+                                                .foregroundStyle(.white.opacity(0.5))
+                                        }
+                                        Text(word.translation)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.white.opacity(0.8))
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+                                .listRowBackground(Color(red: 0.16, green: 0.16, blue: 0.16))
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        HapticManager.impact(style: .medium)
+                                        withAnimation {
+                                            savedWordIDs.remove(word.id)
+                                        }
+                                        WidgetCenter.shared.reloadTimelines(ofKind: "QazaqVocabWidget")
+                                    } label: {
+                                        Label("Unsave", systemImage: "bookmark.slash")
+                                    }
+                                }
                             }
-                            Text(word.translation)
-                                .font(.subheadline)
-                                .foregroundStyle(.white.opacity(0.8))
+                        } header: {
+                            Text("\(savedWords.count) \(savedWords.count == 1 ? "word" : "words")")
+                                .font(.footnote)
+                                .foregroundStyle(.white.opacity(0.4))
+                                .textCase(.uppercase)
                         }
-                        .listRowBackground(Color(red: 0.16, green: 0.16, blue: 0.16))
                     }
+                    .listStyle(.insetGrouped)
                     .scrollContentBackground(.hidden)
                 }
             }
             .background(Color(red: 0.10, green: 0.10, blue: 0.10).ignoresSafeArea())
-            .navigationTitle("Profile")
-        }
-    }
-}
-
-struct CategorySummaryCard: View {
-    let title: String
-    let count: Int
-    let icon: String
-    let iconColor: Color
-    let isSelected: Bool
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.headline)
-                    .foregroundStyle(iconColor)
-                Spacer()
-                Text("\(count)")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white)
+            .navigationTitle("Saved")
+            .sheet(item: $selectedWordForDetails) { word in
+                WordDetailSheet(word: word, savedWordIDs: $savedWordIDs)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
-            
-            Text(title)
-                .font(.footnote)
-                .fontWeight(.medium)
-                .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
         }
-        .padding(14)
-        .frame(maxWidth: .infinity)
-        .background(isSelected ? Color(red: 0.22, green: 0.22, blue: 0.24) : Color(red: 0.15, green: 0.15, blue: 0.15))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(isSelected ? iconColor.opacity(0.7) : Color.clear, lineWidth: 1.5)
-        )
     }
 }
 

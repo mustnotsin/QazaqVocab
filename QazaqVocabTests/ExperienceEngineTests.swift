@@ -236,4 +236,83 @@ final class ExperienceEngineTests: XCTestCase {
         let expected = "Упс, похоже, слова закончились! Поздравляем, вы протестировали первую версию моего приложения!"
         XCTAssertEqual(ExperienceEngine.completionMessage, expected, "Agreed Russian completion message must match verbatim")
     }
+    
+    // MARK: - Issue #4 Saved Words Tests
+    
+    // Issue #4 - Criterion 2 & 8: Migration combines legacy selections without duplicates
+    func testMigration_combinesLegacyFavoritesAndWantToLearnWithoutDuplicates() {
+        let testSuiteName = "test.saved.migration"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+        testDefaults.removeObject(forKey: ExperienceEngine.legacyFavoriteWordIDsKey)
+        testDefaults.removeObject(forKey: ExperienceEngine.legacyWantToLearnIDsKey)
+        testDefaults.removeObject(forKey: ExperienceEngine.hasMigratedSavedWordsKey)
+        
+        // Populate legacy data
+        let legacyFavorites = [1, 2, 3]
+        let legacyWantToLearn = [2, 3, 4, 5]
+        testDefaults.set("[1, 2, 3]", forKey: ExperienceEngine.legacyFavoriteWordIDsKey)
+        testDefaults.set("[2, 3, 4, 5]", forKey: ExperienceEngine.legacyWantToLearnIDsKey)
+        
+        let migrated = ExperienceEngine.migrateLegacySavedSelectionsIfNeeded(defaults: testDefaults)
+        
+        XCTAssertEqual(migrated, Set([1, 2, 3, 4, 5]), "Migrated set must be the union of legacy selections")
+        XCTAssertEqual(migrated.count, 5, "Migrated set must contain zero duplicate entries")
+        
+        let retrieved = ExperienceEngine.getSavedWordIDs(from: testDefaults)
+        XCTAssertEqual(retrieved, Set([1, 2, 3, 4, 5]), "Saved word IDs in storage must match migrated set")
+        
+        testDefaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+        testDefaults.removeObject(forKey: ExperienceEngine.legacyFavoriteWordIDsKey)
+        testDefaults.removeObject(forKey: ExperienceEngine.legacyWantToLearnIDsKey)
+        testDefaults.removeObject(forKey: ExperienceEngine.hasMigratedSavedWordsKey)
+    }
+    
+    // Issue #4 - Criterion 3, 4 & 8: Save/unsave toggle and persistence
+    func testSavedToggleAndPersistence_addsAndRemovesWordID() {
+        let testSuiteName = "test.saved.toggle"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+        
+        XCTAssertTrue(ExperienceEngine.getSavedWordIDs(from: testDefaults).isEmpty)
+        
+        // Save word ID 42
+        let afterSave = ExperienceEngine.toggleSavedWordID(42, in: testDefaults)
+        XCTAssertTrue(afterSave.contains(42), "Word ID 42 must be saved")
+        XCTAssertEqual(ExperienceEngine.getSavedWordIDs(from: testDefaults), Set([42]), "Saved word ID 42 must persist")
+        
+        // Unsave word ID 42
+        let afterUnsave = ExperienceEngine.toggleSavedWordID(42, in: testDefaults)
+        XCTAssertFalse(afterUnsave.contains(42), "Word ID 42 must be removed after toggling again")
+        XCTAssertTrue(ExperienceEngine.getSavedWordIDs(from: testDefaults).isEmpty, "Saved word IDs must be empty after unsave")
+        
+        testDefaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+    }
+    
+    // Issue #4 - Criterion 6 & 8: Saved words remain available after collection completion
+    func testFilterSavedWords_preservesEntriesIndependentlyOfCompletion() {
+        let testSuiteName = "test.saved.completion.independence"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+        testDefaults.removeObject(forKey: ExperienceEngine.isCollectionCompletedKey)
+        
+        // Mark collection as completed
+        ExperienceEngine.markCollectionCompleted(in: testDefaults)
+        XCTAssertTrue(ExperienceEngine.isCollectionCompleted(in: testDefaults))
+        
+        let pool: [WordItem] = (1...5).map { id in
+            WordItem(id: id, kazakh: "сөз_\(id)", partOfSpeech: "зат есім", translation: "слово_\(id)", example: "мысал_\(id)", phonetic: nil, details: nil, additionalExamples: nil)
+        }
+        
+        let savedIDs: Set<Int> = [2, 4]
+        ExperienceEngine.saveSavedWordIDs(savedIDs, in: testDefaults)
+        
+        let savedWords = ExperienceEngine.filterSavedWords(from: pool, savedIDs: ExperienceEngine.getSavedWordIDs(from: testDefaults))
+        
+        XCTAssertEqual(savedWords.count, 2, "Saved words count must be preserved")
+        XCTAssertEqual(Set(savedWords.map(\.id)), Set([2, 4]), "Saved words entries must remain completely accessible after collection completion")
+        
+        testDefaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+        testDefaults.removeObject(forKey: ExperienceEngine.isCollectionCompletedKey)
+    }
 }
