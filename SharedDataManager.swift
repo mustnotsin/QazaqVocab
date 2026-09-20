@@ -3,6 +3,13 @@ import Foundation
 enum ExperienceEngine {
     static let appGroupID = "group.com.beksultan.QazaqVocab"
     static let activeWordIDKey = "widget_active_word_id"
+    static let seenWordIDsKey = "seen_word_ids"
+    static let discoveryFeedOrderKey = "discovery_feed_order"
+    static let isCollectionCompletedKey = "collection_completed"
+    static let isReminderEligibleKey = "reminder_eligible"
+    
+    /// Canonical Russian completion message acknowledging TestFlight testers upon exhausting all unseen entries.
+    static let completionMessage = "Упс, похоже, слова закончились! Поздравляем, вы протестировали первую версию моего приложения!"
     
     /// Deterministically selects the featured daily word for a given calendar date from a vocabulary pool.
     /// The same calendar date always produces the exact same featured entry regardless of the time of day.
@@ -36,6 +43,106 @@ enum ExperienceEngine {
         let seen = remaining.filter { seenIDs.contains($0.id) }
         
         return [featured] + unseen + seen
+    }
+    
+    /// Retrieves or initializes the learner's shuffled discovery feed order.
+    /// If an order is already persisted in the given defaults, it is loaded.
+    /// Otherwise, the pool's IDs are shuffled (or passed through `shuffler`) and persisted.
+    static func getOrInitializeDiscoveryFeedOrder(
+        from pool: [WordItem],
+        defaults: UserDefaults? = UserDefaults(suiteName: appGroupID),
+        shuffler: ([Int]) -> [Int] = { $0.shuffled() }
+    ) -> [Int] {
+        let poolIDs = pool.map(\.id)
+        guard !poolIDs.isEmpty else { return [] }
+        
+        var existingOrder: [Int] = []
+        if let defaults = defaults,
+           let data = defaults.string(forKey: discoveryFeedOrderKey)?.data(using: .utf8),
+           let saved = try? JSONDecoder().decode([Int].self, from: data) {
+            existingOrder = saved
+        }
+        
+        if existingOrder.isEmpty {
+            let shuffled = shuffler(poolIDs)
+            saveDiscoveryFeedOrder(shuffled, in: defaults)
+            return shuffled
+        } else {
+            let poolSet = Set(poolIDs)
+            var consolidated = existingOrder.filter { poolSet.contains($0) }
+            let consolidatedSet = Set(consolidated)
+            let newIDs = poolIDs.filter { !consolidatedSet.contains($0) }
+            if !newIDs.isEmpty {
+                consolidated.append(contentsOf: shuffler(newIDs))
+                saveDiscoveryFeedOrder(consolidated, in: defaults)
+            }
+            return consolidated
+        }
+    }
+    
+    /// Persists the discovery feed order to storage.
+    static func saveDiscoveryFeedOrder(_ order: [Int], in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) {
+        guard let defaults = defaults,
+              let data = try? JSONEncoder().encode(order),
+              let string = String(data: data, encoding: .utf8) else {
+            return
+        }
+        defaults.set(string, forKey: discoveryFeedOrderKey)
+    }
+    
+    /// Prepares the finite discovery feed.
+    /// Today's featured entry is always index 0 (even if previously seen).
+    /// Followed by all remaining UNSEEN entries from `feedOrder` in their persisted relative order.
+    /// If today's featured entry is present in `feedOrder`, it is excluded from the remaining list so it never appears twice.
+    /// All entries in `seenIDs` are excluded from the remaining list.
+    static func prepareDiscoveryFeed(
+        from pool: [WordItem],
+        featuredEntry: WordItem?,
+        feedOrder: [Int],
+        seenIDs: Set<Int>
+    ) -> [WordItem] {
+        guard !pool.isEmpty else { return [] }
+        let wordsByID = Dictionary(uniqueKeysWithValues: pool.map { ($0.id, $0) })
+        
+        var result: [WordItem] = []
+        let featuredID = featuredEntry?.id
+        
+        if let featured = featuredEntry {
+            result.append(featured)
+        } else if let first = pool.first {
+            result.append(first)
+        }
+        
+        let excludedIDs: Set<Int> = Set(seenIDs).union(featuredID.map { [$0] } ?? [])
+        
+        for id in feedOrder {
+            if !excludedIDs.contains(id), let word = wordsByID[id] {
+                result.append(word)
+            }
+        }
+        
+        return result
+    }
+    
+    /// Returns whether the learner has completed the finite TestFlight collection.
+    static func isCollectionCompleted(in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) -> Bool {
+        defaults?.bool(forKey: isCollectionCompletedKey) ?? false
+    }
+    
+    /// Returns whether the learner is eligible for daily reminders.
+    /// Completion of the collection marks reminder eligibility false.
+    static func isReminderEligible(in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) -> Bool {
+        guard let defaults = defaults else { return true }
+        if defaults.object(forKey: isReminderEligibleKey) == nil {
+            return !isCollectionCompleted(in: defaults)
+        }
+        return defaults.bool(forKey: isReminderEligibleKey)
+    }
+    
+    /// Marks the finite TestFlight collection as completed and disables reminder eligibility.
+    static func markCollectionCompleted(in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) {
+        defaults?.set(true, forKey: isCollectionCompletedKey)
+        defaults?.set(false, forKey: isReminderEligibleKey)
     }
     
     /// Saves the active featured word ID into shared user defaults for widget access.

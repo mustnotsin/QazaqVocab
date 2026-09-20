@@ -87,89 +87,126 @@ struct ContentView: View {
     }
 }
 
+enum FeedItem: Identifiable, Equatable {
+    case word(WordItem)
+    case completion
+    
+    var id: String {
+        switch self {
+        case .word(let item):
+            return "word_\(item.id)"
+        case .completion:
+            return "feed_completion"
+        }
+    }
+    
+    static func == (lhs: FeedItem, rhs: FeedItem) -> Bool {
+        switch (lhs, rhs) {
+        case (.word(let a), .word(let b)):
+            return a.id == b.id
+        case (.completion, .completion):
+            return true
+        default:
+            return false
+        }
+    }
+}
+
 struct HomeFeedView: View {
     let allWords: [WordItem]
     @Binding var favoriteWordIDs: Set<Int>
     @Binding var wantToLearnIDs: Set<Int>
     @Binding var seenWordIDs: Set<Int>
     
-    @State private var feedWords: [WordItem] = []
+    @AppStorage(ExperienceEngine.isCollectionCompletedKey, store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
+    private var isCollectionCompleted: Bool = false
+    
+    @State private var feedItems: [FeedItem] = []
     @State private var selectedWordForDetails: WordItem?
     
     var body: some View {
         GeometryReader { proxy in
             ScrollView(.vertical, showsIndicators: false) {
                 LazyVStack(spacing: 0) {
-                    ForEach(feedWords) { item in
-                        VStack(spacing: 14) {
-                            Spacer()
-                            
-                            Text(item.kazakh.lowercased())
-                                .font(.system(size: 46, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.white)
-                            
-                            Text(item.partOfSpeech.lowercased())
-                                .font(.system(size: 16, weight: .medium))
-                                .italic()
-                                .foregroundStyle(Color.white.opacity(0.6))
-                            
-                            Text(item.translation)
-                                .font(.title3)
-                                .fontWeight(.regular)
-                                .foregroundStyle(Color.white.opacity(0.9))
-                                .padding(.top, 4)
-                            
-                            Text(item.example)
-                                .font(.body)
-                                .multilineTextAlignment(.center)
-                                .foregroundStyle(Color.white.opacity(0.75))
-                                .padding(.horizontal, 36)
-                                .padding(.top, 16)
-                            
-                            HStack(spacing: 18) {
-                                ActionPillButton(
-                                    systemName: favoriteWordIDs.contains(item.id) ? "heart.fill" : "heart",
-                                    iconColor: favoriteWordIDs.contains(item.id) ? .red : .white.opacity(0.7),
-                                    isActive: favoriteWordIDs.contains(item.id)
-                                ) {
-                                    HapticManager.impact(style: .medium)
-                                    toggleMembership(id: item.id, set: &favoriteWordIDs)
-                                }
+                    ForEach(feedItems) { feedItem in
+                        switch feedItem {
+                        case .word(let item):
+                            VStack(spacing: 14) {
+                                Spacer()
                                 
-                                ActionPillButton(
-                                    systemName: "info.circle",
-                                    iconColor: .white.opacity(0.85),
-                                    isActive: false
-                                ) {
-                                    HapticManager.impact(style: .light)
-                                    selectedWordForDetails = item
-                                }
+                                Text(item.kazakh.lowercased())
+                                    .font(.system(size: 46, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.white)
                                 
-                                ActionPillButton(
-                                    systemName: wantToLearnIDs.contains(item.id) ? "bookmark.fill" : "bookmark",
-                                    iconColor: wantToLearnIDs.contains(item.id) ? .yellow : .white.opacity(0.7),
-                                    isActive: wantToLearnIDs.contains(item.id)
-                                ) {
-                                    HapticManager.impact(style: .medium)
-                                    toggleMembership(id: item.id, set: &wantToLearnIDs)
-                                }
+                                Text(item.partOfSpeech.lowercased())
+                                    .font(.system(size: 16, weight: .medium))
+                                    .italic()
+                                    .foregroundStyle(Color.white.opacity(0.6))
                                 
-                                ActionPillButton(
-                                    systemName: "square.and.arrow.up",
-                                    iconColor: .white.opacity(0.85),
-                                    isActive: false
-                                ) {
-                                    HapticManager.impact(style: .medium)
-                                    SharePresenter.presentShareSheet(word: item)
+                                Text(item.translation)
+                                    .font(.title3)
+                                    .fontWeight(.regular)
+                                    .foregroundStyle(Color.white.opacity(0.9))
+                                    .padding(.top, 4)
+                                
+                                Text(item.example)
+                                    .font(.body)
+                                    .multilineTextAlignment(.center)
+                                    .foregroundStyle(Color.white.opacity(0.75))
+                                    .padding(.horizontal, 36)
+                                    .padding(.top, 16)
+                                
+                                HStack(spacing: 18) {
+                                    ActionPillButton(
+                                        systemName: favoriteWordIDs.contains(item.id) ? "heart.fill" : "heart",
+                                        iconColor: favoriteWordIDs.contains(item.id) ? .red : .white.opacity(0.7),
+                                        isActive: favoriteWordIDs.contains(item.id)
+                                    ) {
+                                        HapticManager.impact(style: .medium)
+                                        toggleMembership(id: item.id, set: &favoriteWordIDs)
+                                    }
+                                    
+                                    ActionPillButton(
+                                        systemName: "info.circle",
+                                        iconColor: .white.opacity(0.85),
+                                        isActive: false
+                                    ) {
+                                        HapticManager.impact(style: .light)
+                                        selectedWordForDetails = item
+                                    }
+                                    
+                                    ActionPillButton(
+                                        systemName: wantToLearnIDs.contains(item.id) ? "bookmark.fill" : "bookmark",
+                                        iconColor: wantToLearnIDs.contains(item.id) ? .yellow : .white.opacity(0.7),
+                                        isActive: wantToLearnIDs.contains(item.id)
+                                    ) {
+                                        HapticManager.impact(style: .medium)
+                                        toggleMembership(id: item.id, set: &wantToLearnIDs)
+                                    }
+                                    
+                                    ActionPillButton(
+                                        systemName: "square.and.arrow.up",
+                                        iconColor: .white.opacity(0.85),
+                                        isActive: false
+                                    ) {
+                                        HapticManager.impact(style: .medium)
+                                        SharePresenter.presentShareSheet(word: item)
+                                    }
                                 }
+                                .padding(.top, 28)
+                                
+                                Spacer()
                             }
-                            .padding(.top, 28)
+                            .frame(width: proxy.size.width, height: proxy.size.height)
+                            .onAppear {
+                                markAsSeen(id: item.id)
+                            }
                             
-                            Spacer()
-                        }
-                        .frame(width: proxy.size.width, height: proxy.size.height)
-                        .onAppear {
-                            markAsSeen(id: item.id)
+                        case .completion:
+                            CompletionCardView {
+                                handleCollectionCompletion()
+                            }
+                            .frame(width: proxy.size.width, height: proxy.size.height)
                         }
                     }
                 }
@@ -188,21 +225,36 @@ struct HomeFeedView: View {
     }
     
     private func prepareFeed() {
-        guard feedWords.isEmpty else { return }
+        guard feedItems.isEmpty else { return }
+        guard !allWords.isEmpty else { return }
+        
         let featured = ExperienceEngine.featuredEntry(from: allWords)
         if let featured = featured {
             ExperienceEngine.saveActiveWordID(featured.id)
         }
-        feedWords = ExperienceEngine.prepareWordsFeed(
+        
+        let feedOrder = ExperienceEngine.getOrInitializeDiscoveryFeedOrder(from: allWords)
+        let feedWords = ExperienceEngine.prepareDiscoveryFeed(
             from: allWords,
             featuredEntry: featured,
+            feedOrder: feedOrder,
             seenIDs: seenWordIDs
         )
+        
+        feedItems = feedWords.map { .word($0) } + [.completion]
     }
     
     private func markAsSeen(id: Int) {
         if !seenWordIDs.contains(id) {
             seenWordIDs.insert(id)
+        }
+    }
+    
+    private func handleCollectionCompletion() {
+        if !isCollectionCompleted {
+            isCollectionCompleted = true
+            ExperienceEngine.markCollectionCompleted()
+            HapticManager.impact(style: .medium)
         }
     }
     
@@ -215,6 +267,51 @@ struct HomeFeedView: View {
             }
         }
         WidgetCenter.shared.reloadTimelines(ofKind: "QazaqVocabWidget")
+    }
+}
+
+struct CompletionCardView: View {
+    let onAppearAction: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            ZStack {
+                Circle()
+                    .fill(Color(red: 0.18, green: 0.18, blue: 0.18))
+                    .frame(width: 80, height: 80)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    )
+                
+                Image(systemName: "sparkles")
+                    .font(.system(size: 34, weight: .medium))
+                    .foregroundStyle(Color(red: 0.95, green: 0.77, blue: 0.25))
+            }
+            
+            Text(ExperienceEngine.completionMessage)
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white.opacity(0.95))
+                .lineSpacing(6)
+                .padding(.horizontal, 32)
+            
+            Text("Все слова первой версии пройдены. Сохранённые слова остаются доступны, а виджеты продолжат показывать новые слова каждый день.")
+                .font(.system(size: 15))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Color.white.opacity(0.6))
+                .lineSpacing(4)
+                .padding(.horizontal, 36)
+                .padding(.top, 4)
+            
+            Spacer()
+        }
+        .padding()
+        .onAppear {
+            onAppearAction()
+        }
     }
 }
 
