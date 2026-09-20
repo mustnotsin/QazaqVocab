@@ -8,6 +8,18 @@ enum ExperienceEngine {
     static let isCollectionCompletedKey = "collection_completed"
     static let isReminderEligibleKey = "reminder_eligible"
     
+    // MARK: - First-Time Setup & Daily Reminders (Issue #10)
+    static let hasCompletedFirstTimeSetupKey = "has_completed_first_time_setup"
+    static let dailyReminderHourKey = "daily_reminder_hour"
+    static let dailyReminderMinuteKey = "daily_reminder_minute"
+    static let isReminderEnabledKey = "daily_reminder_enabled"
+    static let dailyReminderIdentifier = "qazaqvocab_daily_reminder"
+    static let notificationDestinationKey = "destination"
+    static let featuredWordDestination = "featured_word"
+    
+    static let defaultReminderHour = 10
+    static let defaultReminderMinute = 0
+    
     /// Canonical Russian completion message acknowledging TestFlight testers upon exhausting all unseen entries.
     static let completionMessage = "Упс, похоже, слова закончились! Поздравляем, вы протестировали первую версию моего приложения!"
     
@@ -156,6 +168,44 @@ enum ExperienceEngine {
             return nil
         }
         return defaults.integer(forKey: activeWordIDKey)
+    }
+    
+    // MARK: - Setup & Reminder State Helpers (Issue #10)
+    
+    /// Returns whether the learner has completed first-time setup.
+    static func hasCompletedFirstTimeSetup(in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) -> Bool {
+        defaults?.bool(forKey: hasCompletedFirstTimeSetupKey) ?? false
+    }
+    
+    /// Persists whether the learner has completed first-time setup.
+    static func setFirstTimeSetupCompleted(_ completed: Bool = true, in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) {
+        defaults?.set(completed, forKey: hasCompletedFirstTimeSetupKey)
+    }
+    
+    /// Retrieves the chosen reminder time (hour, minute), defaulting to 10:00 if not previously set.
+    static func getReminderTime(from defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) -> (hour: Int, minute: Int) {
+        guard let defaults = defaults, defaults.object(forKey: dailyReminderHourKey) != nil else {
+            return (defaultReminderHour, defaultReminderMinute)
+        }
+        let hour = defaults.integer(forKey: dailyReminderHourKey)
+        let minute = defaults.integer(forKey: dailyReminderMinuteKey)
+        return (hour, minute)
+    }
+    
+    /// Persists the chosen reminder time.
+    static func saveReminderTime(hour: Int, minute: Int, in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) {
+        defaults?.set(hour, forKey: dailyReminderHourKey)
+        defaults?.set(minute, forKey: dailyReminderMinuteKey)
+    }
+    
+    /// Returns whether reminders are enabled by the learner.
+    static func isReminderEnabled(in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) -> Bool {
+        defaults?.bool(forKey: isReminderEnabledKey) ?? false
+    }
+    
+    /// Persists reminder enabled state.
+    static func setReminderEnabled(_ enabled: Bool, in defaults: UserDefaults? = UserDefaults(suiteName: appGroupID)) {
+        defaults?.set(enabled, forKey: isReminderEnabledKey)
     }
     
     // MARK: - Saved Words Management (Issue #4)

@@ -20,6 +20,11 @@ struct ContentView: View {
     @AppStorage("seen_word_ids", store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
     private var seenWordIDsRaw: String = "[]"
     
+    @AppStorage(ExperienceEngine.hasCompletedFirstTimeSetupKey, store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
+    private var hasCompletedFirstTimeSetup: Bool = false
+    
+    @ObservedObject private var navigationState = AppNavigationState.shared
+    
     private var savedWordIDs: Binding<Set<Int>> {
         Binding(
             get: { decodeIDSet(from: savedWordIDsRaw) },
@@ -40,8 +45,14 @@ struct ContentView: View {
                 ContentErrorView(error: error) {
                     reloadContent()
                 }
+            } else if !hasCompletedFirstTimeSetup {
+                FirstTimeSetupView {
+                    withAnimation(.easeInOut) {
+                        hasCompletedFirstTimeSetup = true
+                    }
+                }
             } else {
-                TabView {
+                TabView(selection: $navigationState.selectedTab) {
                     HomeFeedView(
                         allWords: allWords,
                         savedWordIDs: savedWordIDs,
@@ -50,6 +61,7 @@ struct ContentView: View {
                     .tabItem {
                         Label("Слова", systemImage: "text.book.closed")
                     }
+                    .tag(AppTab.words)
                     
                     SavedSectionView(
                         words: allWords,
@@ -58,6 +70,7 @@ struct ContentView: View {
                     .tabItem {
                         Label("Сохранённое", systemImage: "bookmark")
                     }
+                    .tag(AppTab.saved)
                 }
             }
         }
@@ -198,95 +211,107 @@ struct HomeFeedView: View {
     
     var body: some View {
         GeometryReader { proxy in
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVStack(spacing: 0) {
-                    ForEach(feedItems) { feedItem in
-                        switch feedItem {
-                        case .word(let item):
-                            VStack(spacing: 14) {
-                                Spacer()
-                                
-                                Text(item.kazakh.lowercased())
-                                    .font(.system(size: 46, weight: .semibold, design: .rounded))
-                                    .foregroundStyle(.white)
-                                
-                                Text(item.partOfSpeech.lowercased())
-                                    .font(.system(size: 16, weight: .medium))
-                                    .italic()
-                                    .foregroundStyle(Color.white.opacity(0.6))
-                                
-                                Text(item.meaning)
-                                    .font(.title3)
-                                    .fontWeight(.regular)
-                                    .foregroundStyle(Color.white.opacity(0.9))
-                                    .padding(.top, 4)
-                                
-                                VStack(spacing: 6) {
-                                    Text(item.primaryExample.kazakh)
-                                        .font(.body)
-                                        .fontWeight(.medium)
-                                        .multilineTextAlignment(.center)
-                                        .foregroundStyle(Color.white.opacity(0.85))
-                                    
-                                    if !item.primaryExample.russian.isEmpty {
-                                        Text(item.primaryExample.russian)
-                                            .font(.subheadline)
+            ScrollViewReader { scrollProxy in
+                ScrollView(.vertical, showsIndicators: false) {
+                    LazyVStack(spacing: 0) {
+                        ForEach(feedItems) { feedItem in
+                            Group {
+                                switch feedItem {
+                                case .word(let item):
+                                    VStack(spacing: 14) {
+                                        Spacer()
+                                        
+                                        Text(item.kazakh.lowercased())
+                                            .font(.system(size: 46, weight: .semibold, design: .rounded))
+                                            .foregroundStyle(.white)
+                                        
+                                        Text(item.partOfSpeech.lowercased())
+                                            .font(.system(size: 16, weight: .medium))
                                             .italic()
-                                            .multilineTextAlignment(.center)
-                                            .foregroundStyle(Color.white.opacity(0.55))
+                                            .foregroundStyle(Color.white.opacity(0.6))
+                                        
+                                        Text(item.meaning)
+                                            .font(.title3)
+                                            .fontWeight(.regular)
+                                            .foregroundStyle(Color.white.opacity(0.9))
+                                            .padding(.top, 4)
+                                        
+                                        VStack(spacing: 6) {
+                                            Text(item.primaryExample.kazakh)
+                                                .font(.body)
+                                                .fontWeight(.medium)
+                                                .multilineTextAlignment(.center)
+                                                .foregroundStyle(Color.white.opacity(0.85))
+                                            
+                                            if !item.primaryExample.russian.isEmpty {
+                                                Text(item.primaryExample.russian)
+                                                    .font(.subheadline)
+                                                    .italic()
+                                                    .multilineTextAlignment(.center)
+                                                    .foregroundStyle(Color.white.opacity(0.55))
+                                            }
+                                        }
+                                        .padding(.horizontal, 36)
+                                        .padding(.top, 16)
+                                        
+                                        HStack(spacing: 24) {
+                                            ActionPillButton(
+                                                systemName: savedWordIDs.contains(item.id) ? "bookmark.fill" : "bookmark",
+                                                iconColor: savedWordIDs.contains(item.id) ? Color(red: 0.95, green: 0.77, blue: 0.25) : .white.opacity(0.7),
+                                                isActive: savedWordIDs.contains(item.id)
+                                            ) {
+                                                HapticManager.impact(style: .medium)
+                                                toggleSaved(id: item.id)
+                                            }
+                                            
+                                            ActionPillButton(
+                                                systemName: "info.circle",
+                                                iconColor: .white.opacity(0.85),
+                                                isActive: false
+                                            ) {
+                                                HapticManager.impact(style: .light)
+                                                selectedWordForDetails = item
+                                            }
+                                            
+                                            ActionPillButton(
+                                                systemName: "square.and.arrow.up",
+                                                iconColor: .white.opacity(0.85),
+                                                isActive: false
+                                            ) {
+                                                HapticManager.impact(style: .medium)
+                                                SharePresenter.presentShareSheet(word: item)
+                                            }
+                                        }
+                                        .padding(.top, 28)
+                                        
+                                        Spacer()
                                     }
-                                }
-                                .padding(.horizontal, 36)
-                                .padding(.top, 16)
-                                
-                                HStack(spacing: 24) {
-                                    ActionPillButton(
-                                        systemName: savedWordIDs.contains(item.id) ? "bookmark.fill" : "bookmark",
-                                        iconColor: savedWordIDs.contains(item.id) ? Color(red: 0.95, green: 0.77, blue: 0.25) : .white.opacity(0.7),
-                                        isActive: savedWordIDs.contains(item.id)
-                                    ) {
-                                        HapticManager.impact(style: .medium)
-                                        toggleSaved(id: item.id)
+                                    .frame(width: proxy.size.width, height: proxy.size.height)
+                                    .onAppear {
+                                        markAsSeen(id: item.id)
                                     }
                                     
-                                    ActionPillButton(
-                                        systemName: "info.circle",
-                                        iconColor: .white.opacity(0.85),
-                                        isActive: false
-                                    ) {
-                                        HapticManager.impact(style: .light)
-                                        selectedWordForDetails = item
+                                case .completion:
+                                    CompletionCardView {
+                                        handleCollectionCompletion()
                                     }
-                                    
-                                    ActionPillButton(
-                                        systemName: "square.and.arrow.up",
-                                        iconColor: .white.opacity(0.85),
-                                        isActive: false
-                                    ) {
-                                        HapticManager.impact(style: .medium)
-                                        SharePresenter.presentShareSheet(word: item)
-                                    }
+                                    .frame(width: proxy.size.width, height: proxy.size.height)
                                 }
-                                .padding(.top, 28)
-                                
-                                Spacer()
                             }
-                            .frame(width: proxy.size.width, height: proxy.size.height)
-                            .onAppear {
-                                markAsSeen(id: item.id)
-                            }
-                            
-                        case .completion:
-                            CompletionCardView {
-                                handleCollectionCompletion()
-                            }
-                            .frame(width: proxy.size.width, height: proxy.size.height)
+                            .id(feedItem.id)
+                        }
+                    }
+                }
+                .scrollTargetBehavior(.paging)
+                .background(Color(red: 0.12, green: 0.12, blue: 0.12).ignoresSafeArea())
+                .onReceive(AppNavigationState.shared.$scrollToFeaturedTrigger) { _ in
+                    if let firstID = feedItems.first?.id {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            scrollProxy.scrollTo(firstID, anchor: .top)
                         }
                     }
                 }
             }
-            .scrollTargetBehavior(.paging)
-            .background(Color(red: 0.12, green: 0.12, blue: 0.12).ignoresSafeArea())
             .sheet(item: $selectedWordForDetails) { word in
                 WordDetailSheet(word: word, savedWordIDs: $savedWordIDs)
                     .presentationDetents([.medium, .large])
@@ -334,6 +359,7 @@ struct HomeFeedView: View {
         if !isCollectionCompleted {
             isCollectionCompleted = true
             ExperienceEngine.markCollectionCompleted()
+            DailyReminderManager.shared.cancelReminders()
             HapticManager.impact(style: .medium)
         }
     }
