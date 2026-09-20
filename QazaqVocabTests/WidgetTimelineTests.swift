@@ -56,20 +56,20 @@ final class WidgetTimelineTests: XCTestCase {
             // Current timeline entry must strictly equal the app's featured entry
             XCTAssertNotNil(appFeaturedWord, "App featured word should not be nil for valid pool")
             XCTAssertEqual(
-                timeline.current.word,
+                timeline.currentWord,
                 appFeaturedWord,
                 "Widget today's entry must agree with app featured entry for day offset \(dayOffset)"
             )
-            XCTAssertEqual(timeline.current.date, controlledDate)
+            XCTAssertEqual(timeline.currentDate, controlledDate)
             
             // Next timeline entry must agree with tomorrow's app featured entry
             let expectedTomorrow = ExperienceEngine.featuredEntry(from: samplePool, for: timeline.nextMidnight, in: testCalendar)
             XCTAssertEqual(
-                timeline.next.word,
+                timeline.nextWord,
                 expectedTomorrow,
                 "Widget tomorrow's entry must agree with app featured entry at next midnight for day offset \(dayOffset)"
             )
-            XCTAssertEqual(timeline.next.date, timeline.nextMidnight)
+            XCTAssertEqual(timeline.nextDate, timeline.nextMidnight)
             
             // Verify nextMidnight is indeed the start of the next day
             let expectedMidnight = testCalendar.startOfDay(
@@ -98,8 +98,8 @@ final class WidgetTimelineTests: XCTestCase {
             let date = testCalendar.date(byAdding: .day, value: dayOffset, to: baseDate)!
             let timeline = ExperienceEngine.widgetTimelineEntries(from: samplePool, for: date, in: testCalendar)
             
-            XCTAssertNotNil(timeline.current.word)
-            observedWordIDs.insert(timeline.current.word.id)
+            XCTAssertNotNil(timeline.currentWord)
+            observedWordIDs.insert(timeline.currentWord.id)
         }
         
         XCTAssertEqual(
@@ -136,12 +136,12 @@ final class WidgetTimelineTests: XCTestCase {
         let timeline = ExperienceEngine.widgetTimelineEntries(from: emptyPool, for: now, in: testCalendar)
         
         XCTAssertEqual(
-            timeline.current.word,
+            timeline.currentWord,
             ExperienceEngine.fallbackEntry,
             "Widget must use intentional fallback when pool is empty"
         )
         XCTAssertEqual(
-            timeline.next.word,
+            timeline.nextWord,
             ExperienceEngine.fallbackEntry,
             "Widget tomorrow's entry must use intentional fallback when pool is empty"
         )
@@ -169,12 +169,12 @@ final class WidgetTimelineTests: XCTestCase {
     func testIsFeaturedWordDeepLink_validatesExpectedURLs() {
         // Valid deep links
         XCTAssertTrue(ExperienceEngine.isFeaturedWordDeepLink(URL(string: "qazaqvocab://featured")!))
-        XCTAssertTrue(ExperienceEngine.isFeaturedWordDeepLink(URL(string: "qazaqvocab://word")!))
         XCTAssertTrue(ExperienceEngine.isFeaturedWordDeepLink(URL(string: "QAZAQVOCAB://FEATURED")!))
         XCTAssertTrue(ExperienceEngine.isFeaturedWordDeepLink(URL(string: "qazaqvocab:///featured")!))
         
         // Invalid deep links
         XCTAssertFalse(ExperienceEngine.isFeaturedWordDeepLink(URL(string: "https://featured")!))
+        XCTAssertFalse(ExperienceEngine.isFeaturedWordDeepLink(URL(string: "qazaqvocab://word")!))
         XCTAssertFalse(ExperienceEngine.isFeaturedWordDeepLink(URL(string: "qazaqvocab://settings")!))
         XCTAssertFalse(ExperienceEngine.isFeaturedWordDeepLink(URL(string: "qazaqvocab://unknown")!))
         XCTAssertFalse(ExperienceEngine.isFeaturedWordDeepLink(URL(string: "instagram-stories://share")!))
@@ -224,6 +224,6 @@ final class WidgetTimelineTests: XCTestCase {
         let widgetData = ExperienceEngine.widgetTimelineEntries(from: bundled, for: now, in: Calendar.current)
         
         XCTAssertNotNil(appWord)
-        XCTAssertEqual(widgetData.current.word, appWord)
+        XCTAssertEqual(widgetData.currentWord, appWord)
     }
 }

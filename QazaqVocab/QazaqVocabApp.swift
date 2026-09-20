@@ -18,18 +18,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         return true
     }
     
-    func application(
-        _ app: UIApplication,
-        open url: URL,
-        options: [UIApplication.OpenURLOptionsKey : Any] = [:]
-    ) -> Bool {
-        if ExperienceEngine.isFeaturedWordDeepLink(url) {
-            AppNavigationState.shared.navigateToFeaturedWord()
-            return true
-        }
-        return false
-    }
-    
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,

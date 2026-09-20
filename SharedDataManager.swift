@@ -50,7 +50,7 @@ enum ExperienceEngine {
         }
         let host = url.host?.lowercased() ?? ""
         let path = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
-        return host == deepLinkFeaturedHost || path == deepLinkFeaturedHost || host == "word" || path == "word"
+        return host == deepLinkFeaturedHost || path == deepLinkFeaturedHost
     }
     
     /// Returns the featured entry for a given date from the pool, falling back to `fallbackEntry` if the pool is empty.
@@ -62,20 +62,31 @@ enum ExperienceEngine {
         featuredEntry(from: pool, for: date, in: calendar) ?? fallbackEntry
     }
     
+    /// Structured schedule returned for WidgetKit timelines.
+    struct WidgetTimelineSchedule: Equatable {
+        let currentDate: Date
+        let currentWord: WordItem
+        let nextDate: Date
+        let nextWord: WordItem
+        let nextMidnight: Date
+    }
+    
     /// Generates timeline entries for WidgetKit, providing today's featured entry and tomorrow's entry starting at next midnight.
     static func widgetTimelineEntries(
         from pool: [WordItem],
         for currentDate: Date = Date(),
         in calendar: Calendar = Calendar.current
-    ) -> (current: (date: Date, word: WordItem), next: (date: Date, word: WordItem), nextMidnight: Date) {
+    ) -> WidgetTimelineSchedule {
         let todayWord = featuredEntryOrDefault(from: pool, for: currentDate, in: calendar)
         let nextMidnight = calendar.startOfDay(
             for: calendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
         )
         let tomorrowWord = featuredEntryOrDefault(from: pool, for: nextMidnight, in: calendar)
-        return (
-            current: (date: currentDate, word: todayWord),
-            next: (date: nextMidnight, word: tomorrowWord),
+        return WidgetTimelineSchedule(
+            currentDate: currentDate,
+            currentWord: todayWord,
+            nextDate: nextMidnight,
+            nextWord: tomorrowWord,
             nextMidnight: nextMidnight
         )
     }

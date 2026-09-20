@@ -8,13 +8,9 @@ struct WordEntry: TimelineEntry {
 
 struct Provider: TimelineProvider {
     private let words: [WordItem] = loadWords()
-    
-    private var fallbackWord: WordItem {
-        ExperienceEngine.fallbackEntry
-    }
 
     func placeholder(in context: Context) -> WordEntry {
-        WordEntry(date: Date(), word: fallbackWord)
+        WordEntry(date: Date(), word: ExperienceEngine.fallbackEntry)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (WordEntry) -> ()) {
@@ -25,8 +21,8 @@ struct Provider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         let timelineData = ExperienceEngine.widgetTimelineEntries(from: words)
-        let todayEntry = WordEntry(date: timelineData.current.date, word: timelineData.current.word)
-        let tomorrowEntry = WordEntry(date: timelineData.next.date, word: timelineData.next.word)
+        let todayEntry = WordEntry(date: timelineData.currentDate, word: timelineData.currentWord)
+        let tomorrowEntry = WordEntry(date: timelineData.nextDate, word: timelineData.nextWord)
         let timeline = Timeline(entries: [todayEntry, tomorrowEntry], policy: .after(timelineData.nextMidnight))
         completion(timeline)
     }
@@ -190,7 +186,7 @@ struct QazaqVocabWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             QazaqVocabWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Главное слово дня")
+        .configurationDisplayName("Главное казахское слово")
         .description("Открывайте главное казахское слово каждый день прямо на экране «Домой» и экране блокировки.")
         .supportedFamilies([
             .systemSmall,

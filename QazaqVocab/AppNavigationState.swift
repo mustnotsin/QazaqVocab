@@ -19,9 +19,16 @@ public final class AppNavigationState: ObservableObject {
     /// Switches to the Words tab, dismisses any open details, and triggers scrolling to the top featured daily word.
     public func navigateToFeaturedWord() {
         DispatchQueue.main.async {
+            let wasNotWords = self.selectedTab != .words
             self.selectedTab = .words
             self.dismissDetailsTrigger = UUID()
             self.scrollToFeaturedTrigger = UUID()
+            
+            if wasNotWords {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    self.scrollToFeaturedTrigger = UUID()
+                }
+            }
         }
     }
 }

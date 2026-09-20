@@ -336,10 +336,8 @@ struct HomeFeedView: View {
             return
         }
         
-        let featured = ExperienceEngine.featuredEntry(from: allWords)
-        if let featured = featured {
-            ExperienceEngine.saveActiveWordID(featured.id)
-        }
+        let featured = ExperienceEngine.featuredEntryOrDefault(from: allWords)
+        ExperienceEngine.saveActiveWordID(featured.id)
         
         let feedOrder = ExperienceEngine.getOrInitializeDiscoveryFeedOrder(from: allWords)
         let feedWords = ExperienceEngine.prepareDiscoveryFeed(
