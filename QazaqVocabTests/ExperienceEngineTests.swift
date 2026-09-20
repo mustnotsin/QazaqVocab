@@ -679,5 +679,41 @@ final class ExperienceEngineTests: XCTestCase {
             XCTFail("Failed to load basic everyday entries: \(error)")
         }
     }
+    
+    // Issue #7 - Acceptance Criteria: 10 conversational entries pass collection validation
+    func testCuratedConversationalEntries_passStructuralValidation() throws {
+        let fileURL = URL(fileURLWithPath: #file)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("QazaqVocab/CuratedContent/conversational.json")
+        
+        let result = VocabularyLoader.load(from: fileURL)
+        switch result {
+        case .success(let items):
+            XCTAssertEqual(items.count, 10, "Curated conversational collection must contain exactly 10 entries")
+            XCTAssertNoThrow(try VocabularyValidator.validate(collection: items), "Conversational collection must pass validation")
+            
+            for item in items {
+                XCTAssertFalse(item.kazakh.isEmpty)
+                XCTAssertFalse(item.transliteration.isEmpty)
+                XCTAssertFalse(item.partOfSpeech.isEmpty)
+                XCTAssertFalse(item.meaning.isEmpty)
+                XCTAssertFalse(item.primaryExample.kazakh.isEmpty)
+                XCTAssertFalse(item.primaryExample.russian.isEmpty)
+                XCTAssertNotNil(item.usageExplanation)
+                XCTAssertFalse(item.usageExplanation!.isEmpty)
+                if let additionals = item.additionalExamples {
+                    XCTAssertLessThanOrEqual(additionals.count, 2)
+                    for ex in additionals {
+                        XCTAssertFalse(ex.kazakh.isEmpty)
+                        XCTAssertFalse(ex.russian.isEmpty)
+                    }
+                }
+            }
+        case .failure(let error):
+            XCTFail("Failed to load conversational entries: \(error)")
+        }
+    }
 }
+
 
