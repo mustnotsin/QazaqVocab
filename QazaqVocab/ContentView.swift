@@ -11,7 +11,8 @@ struct HapticManager {
 }
 
 struct ContentView: View {
-    @State private var allWords: [WordItem] = loadWords()
+    @State private var allWords: [WordItem] = []
+    @State private var loadingError: ContentLoadingError? = nil
     
     @AppStorage(ExperienceEngine.savedWordIDsKey, store: UserDefaults(suiteName: ExperienceEngine.appGroupID))
     private var savedWordIDsRaw: String = "[]"
@@ -34,28 +35,48 @@ struct ContentView: View {
     }
     
     var body: some View {
-        TabView {
-            HomeFeedView(
-                allWords: allWords,
-                savedWordIDs: savedWordIDs,
-                seenWordIDs: seenWordIDs
-            )
-            .tabItem {
-                Label("Words", systemImage: "text.book.closed")
-            }
-            
-            SavedSectionView(
-                words: allWords,
-                savedWordIDs: savedWordIDs
-            )
-            .tabItem {
-                Label("Saved", systemImage: "bookmark")
+        Group {
+            if let error = loadingError {
+                ContentErrorView(error: error) {
+                    reloadContent()
+                }
+            } else {
+                TabView {
+                    HomeFeedView(
+                        allWords: allWords,
+                        savedWordIDs: savedWordIDs,
+                        seenWordIDs: seenWordIDs
+                    )
+                    .tabItem {
+                        Label("Слова", systemImage: "text.book.closed")
+                    }
+                    
+                    SavedSectionView(
+                        words: allWords,
+                        savedWordIDs: savedWordIDs
+                    )
+                    .tabItem {
+                        Label("Сохранённое", systemImage: "bookmark")
+                    }
+                }
             }
         }
         .preferredColorScheme(.dark)
         .onAppear {
+            reloadContent()
             ExperienceEngine.migrateLegacySavedSelectionsIfNeeded()
             WidgetCenter.shared.reloadTimelines(ofKind: "QazaqVocabWidget")
+        }
+    }
+    
+    private func reloadContent() {
+        switch VocabularyLoader.loadFromBundle() {
+        case .success(let words):
+            self.allWords = words
+            self.loadingError = nil
+        case .failure(let error):
+            self.allWords = []
+            self.loadingError = error
         }
     }
     
@@ -73,6 +94,69 @@ struct ContentView: View {
             return "[]"
         }
         return string
+    }
+}
+
+struct ContentErrorView: View {
+    let error: ContentLoadingError
+    let onRetry: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            ZStack {
+                Circle()
+                    .fill(Color(red: 0.18, green: 0.18, blue: 0.18))
+                    .frame(width: 80, height: 80)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    )
+                
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 34, weight: .medium))
+                    .foregroundStyle(Color(red: 0.95, green: 0.77, blue: 0.25))
+            }
+            
+            Text("Не удалось загрузить слова")
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white.opacity(0.95))
+                .padding(.horizontal, 32)
+            
+            Text(error.localizedDescription)
+                .font(.system(size: 15))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Color.white.opacity(0.6))
+                .lineSpacing(4)
+                .padding(.horizontal, 36)
+            
+            Button {
+                HapticManager.impact(style: .medium)
+                onRetry()
+            } label: {
+                Text("Повторить попытку")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 14)
+                    .background(
+                        Capsule()
+                            .fill(Color(red: 0.22, green: 0.22, blue: 0.22))
+                            .overlay(
+                                Capsule()
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 0.8)
+                            )
+                    )
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 12)
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(red: 0.12, green: 0.12, blue: 0.12).ignoresSafeArea())
     }
 }
 
@@ -131,18 +215,29 @@ struct HomeFeedView: View {
                                     .italic()
                                     .foregroundStyle(Color.white.opacity(0.6))
                                 
-                                Text(item.translation)
+                                Text(item.meaning)
                                     .font(.title3)
                                     .fontWeight(.regular)
                                     .foregroundStyle(Color.white.opacity(0.9))
                                     .padding(.top, 4)
                                 
-                                Text(item.example)
-                                    .font(.body)
-                                    .multilineTextAlignment(.center)
-                                    .foregroundStyle(Color.white.opacity(0.75))
-                                    .padding(.horizontal, 36)
-                                    .padding(.top, 16)
+                                VStack(spacing: 6) {
+                                    Text(item.primaryExample.kazakh)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                        .multilineTextAlignment(.center)
+                                        .foregroundStyle(Color.white.opacity(0.85))
+                                    
+                                    if !item.primaryExample.russian.isEmpty {
+                                        Text(item.primaryExample.russian)
+                                            .font(.subheadline)
+                                            .italic()
+                                            .multilineTextAlignment(.center)
+                                            .foregroundStyle(Color.white.opacity(0.55))
+                                    }
+                                }
+                                .padding(.horizontal, 36)
+                                .padding(.top, 16)
                                 
                                 HStack(spacing: 24) {
                                     ActionPillButton(
@@ -200,12 +295,18 @@ struct HomeFeedView: View {
             .onAppear {
                 prepareFeed()
             }
+            .onChange(of: allWords) { _, _ in
+                prepareFeed(force: true)
+            }
         }
     }
     
-    private func prepareFeed() {
-        guard feedItems.isEmpty else { return }
-        guard !allWords.isEmpty else { return }
+    private func prepareFeed(force: Bool = false) {
+        if !force && !feedItems.isEmpty { return }
+        guard !allWords.isEmpty else {
+            feedItems = []
+            return
+        }
         
         let featured = ExperienceEngine.featuredEntry(from: allWords)
         if let featured = featured {
@@ -339,8 +440,8 @@ struct WordDetailSheet: View {
                             .foregroundStyle(.white)
                         
                         HStack(spacing: 8) {
-                            if let phonetic = word.phonetic {
-                                Text("/\(phonetic)/")
+                            if !word.transliteration.isEmpty {
+                                Text("/\(word.transliteration)/")
                                     .font(.subheadline)
                                     .foregroundStyle(.white.opacity(0.6))
                             }
@@ -354,7 +455,7 @@ struct WordDetailSheet: View {
                                 .foregroundStyle(.white.opacity(0.6))
                         }
                         
-                        Text(word.translation)
+                        Text(word.meaning)
                             .font(.title3)
                             .fontWeight(.medium)
                             .foregroundStyle(.white.opacity(0.9))
@@ -364,15 +465,15 @@ struct WordDetailSheet: View {
                     Divider()
                         .background(Color.white.opacity(0.1))
                     
-                    if let details = word.details {
+                    if let explanation = word.usageExplanation, !explanation.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Usage & Nuance")
+                            Text("Особенности употребления")
                                 .font(.footnote)
                                 .fontWeight(.semibold)
                                 .textCase(.uppercase)
                                 .foregroundStyle(.white.opacity(0.5))
                             
-                            Text(details)
+                            Text(explanation)
                                 .font(.body)
                                 .foregroundStyle(.white.opacity(0.85))
                                 .lineSpacing(4)
@@ -380,23 +481,33 @@ struct WordDetailSheet: View {
                     }
                     
                     if let examples = word.additionalExamples, !examples.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("More Examples")
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Дополнительные примеры")
                                 .font(.footnote)
                                 .fontWeight(.semibold)
                                 .textCase(.uppercase)
                                 .foregroundStyle(.white.opacity(0.5))
                             
-                            ForEach(examples, id: \.self) { ex in
-                                HStack(alignment: .top, spacing: 10) {
+                            ForEach(examples.indices, id: \.self) { idx in
+                                let ex = examples[idx]
+                                HStack(alignment: .top, spacing: 12) {
                                     Circle()
                                         .fill(Color.white.opacity(0.3))
                                         .frame(width: 5, height: 5)
                                         .padding(.top, 7)
                                     
-                                    Text(ex)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.white.opacity(0.8))
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(ex.kazakh)
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                            .foregroundStyle(.white.opacity(0.88))
+                                        
+                                        if !ex.russian.isEmpty {
+                                            Text(ex.russian)
+                                                .font(.caption)
+                                                .foregroundStyle(.white.opacity(0.6))
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -438,6 +549,18 @@ struct SavedSectionView: View {
         ExperienceEngine.filterSavedWords(from: words, savedIDs: savedWordIDs)
     }
     
+    private func formatWordCount(_ count: Int) -> String {
+        let mod10 = count % 10
+        let mod100 = count % 100
+        if mod10 == 1 && mod100 != 11 {
+            return "\(count) слово"
+        } else if (2...4).contains(mod10) && !(12...14).contains(mod100) {
+            return "\(count) слова"
+        } else {
+            return "\(count) слов"
+        }
+    }
+    
     var body: some View {
         NavigationStack {
             Group {
@@ -447,10 +570,10 @@ struct SavedSectionView: View {
                         Image(systemName: "bookmark.slash")
                             .font(.system(size: 48))
                             .foregroundStyle(.white.opacity(0.3))
-                        Text("No saved words yet")
+                        Text("Нет сохранённых слов")
                             .font(.headline)
                             .foregroundStyle(.white.opacity(0.7))
-                        Text("Tap the bookmark icon on any card or in word details to save words for later.")
+                        Text("Нажмите на значок закладки на карточке слова или в подробностях, чтобы сохранить его.")
                             .font(.subheadline)
                             .multilineTextAlignment(.center)
                             .foregroundStyle(.white.opacity(0.4))
@@ -475,7 +598,7 @@ struct SavedSectionView: View {
                                                 .italic()
                                                 .foregroundStyle(.white.opacity(0.5))
                                         }
-                                        Text(word.translation)
+                                        Text(word.meaning)
                                             .font(.subheadline)
                                             .foregroundStyle(.white.opacity(0.8))
                                     }
@@ -490,12 +613,12 @@ struct SavedSectionView: View {
                                         }
                                         WidgetCenter.shared.reloadTimelines(ofKind: "QazaqVocabWidget")
                                     } label: {
-                                        Label("Unsave", systemImage: "bookmark.slash")
+                                        Label("Удалить", systemImage: "bookmark.slash")
                                     }
                                 }
                             }
                         } header: {
-                            Text("\(savedWords.count) \(savedWords.count == 1 ? "word" : "words")")
+                            Text(formatWordCount(savedWords.count))
                                 .font(.footnote)
                                 .foregroundStyle(.white.opacity(0.4))
                                 .textCase(.uppercase)
@@ -506,7 +629,7 @@ struct SavedSectionView: View {
                 }
             }
             .background(Color(red: 0.10, green: 0.10, blue: 0.10).ignoresSafeArea())
-            .navigationTitle("Saved")
+            .navigationTitle("Сохранённое")
             .sheet(item: $selectedWordForDetails) { word in
                 WordDetailSheet(word: word, savedWordIDs: $savedWordIDs)
                     .presentationDetents([.medium, .large])

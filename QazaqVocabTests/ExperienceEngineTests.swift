@@ -315,4 +315,332 @@ final class ExperienceEngineTests: XCTestCase {
         testDefaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
         testDefaults.removeObject(forKey: ExperienceEngine.isCollectionCompletedKey)
     }
+    
+    // MARK: - Issue #5 Russian-First Vocabulary Experience Tests
+    
+    // Issue #5 - Criterion 1: Vocabulary entry supports all agreed Kazakh/Russian fields
+    func testVocabularyEntry_supportsAllAgreedKazakhAndRussianFields() {
+        let entry = WordItem(
+            id: 1,
+            kazakh: "сәуле",
+            transliteration: "säwle",
+            partOfSpeech: "существительное",
+            meaning: "Луч / луч света",
+            primaryExample: BilingualExample(
+                kazakh: "Күн сәулесі бөлмеге түсті.",
+                russian: "Солнечный луч проник в комнату."
+            ),
+            usageExplanation: "Обозначает луч света, а в переносном смысле — тепло и надежду.",
+            additionalExamples: [
+                BilingualExample(
+                    kazakh: "Үміт сәулесі жүрегімді жылытты.",
+                    russian: "Луч надежды согрел моё сердце."
+                ),
+                BilingualExample(
+                    kazakh: "Шам сәулесі қараңғыны сейілтті.",
+                    russian: "Свет лампы рассеял темноту."
+                )
+            ]
+        )
+        
+        XCTAssertEqual(entry.kazakh, "сәуле")
+        XCTAssertEqual(entry.transliteration, "säwle")
+        XCTAssertEqual(entry.partOfSpeech, "существительное")
+        XCTAssertEqual(entry.meaning, "Луч / луч света")
+        XCTAssertEqual(entry.primaryExample.kazakh, "Күн сәулесі бөлмеге түсті.")
+        XCTAssertEqual(entry.primaryExample.russian, "Солнечный луч проник в комнату.")
+        XCTAssertNotNil(entry.usageExplanation)
+        XCTAssertEqual(entry.additionalExamples?.count, 2)
+        XCTAssertEqual(entry.additionalExamples?[0].kazakh, "Үміт сәулесі жүрегімді жылытты.")
+        XCTAssertEqual(entry.additionalExamples?[0].russian, "Луч надежды согрел моё сердце.")
+    }
+    
+    // Issue #5 - Criterion 6: Structural validation passes for complete valid entries
+    func testStructuralValidation_passesForValidEntry() {
+        let validEntry = WordItem(
+            id: 1,
+            kazakh: "батыл",
+            transliteration: "batyl",
+            partOfSpeech: "прилагательное",
+            meaning: "Смелый / решительный",
+            primaryExample: BilingualExample(
+                kazakh: "Ол өте батыл шешім қабылдады.",
+                russian: "Он принял очень смелое решение."
+            ),
+            usageExplanation: "Описывает решительного человека.",
+            additionalExamples: [
+                BilingualExample(
+                    kazakh: "Батыл қадам жасаудан қорықпа.",
+                    russian: "Не бойся делать смелый шаг."
+                )
+            ]
+        )
+        
+        XCTAssertNoThrow(try VocabularyValidator.validate(entry: validEntry))
+    }
+    
+    // Issue #5 - Criterion 6: Validation rejects missing required fields
+    func testStructuralValidation_rejectsMissingRequiredFields() {
+        let missingKazakh = WordItem(
+            id: 1,
+            kazakh: "   ",
+            transliteration: "batyl",
+            partOfSpeech: "прилагательное",
+            meaning: "Смелый",
+            primaryExample: BilingualExample(kazakh: "Мысал", russian: "Пример")
+        )
+        XCTAssertThrowsError(try VocabularyValidator.validate(entry: missingKazakh)) { error in
+            XCTAssertEqual(error as? VocabularyValidationError, .missingRequiredField(id: 1, field: "kazakh"))
+        }
+        
+        let missingTranslit = WordItem(
+            id: 2,
+            kazakh: "батыл",
+            transliteration: "",
+            partOfSpeech: "прилагательное",
+            meaning: "Смелый",
+            primaryExample: BilingualExample(kazakh: "Мысал", russian: "Пример")
+        )
+        XCTAssertThrowsError(try VocabularyValidator.validate(entry: missingTranslit)) { error in
+            XCTAssertEqual(error as? VocabularyValidationError, .missingRequiredField(id: 2, field: "transliteration"))
+        }
+        
+        let missingPos = WordItem(
+            id: 3,
+            kazakh: "батыл",
+            transliteration: "batyl",
+            partOfSpeech: "\n",
+            meaning: "Смелый",
+            primaryExample: BilingualExample(kazakh: "Мысал", russian: "Пример")
+        )
+        XCTAssertThrowsError(try VocabularyValidator.validate(entry: missingPos)) { error in
+            XCTAssertEqual(error as? VocabularyValidationError, .missingRequiredField(id: 3, field: "partOfSpeech"))
+        }
+        
+        let missingMeaning = WordItem(
+            id: 4,
+            kazakh: "батыл",
+            transliteration: "batyl",
+            partOfSpeech: "прилагательное",
+            meaning: "",
+            primaryExample: BilingualExample(kazakh: "Мысал", russian: "Пример")
+        )
+        XCTAssertThrowsError(try VocabularyValidator.validate(entry: missingMeaning)) { error in
+            XCTAssertEqual(error as? VocabularyValidationError, .missingRequiredField(id: 4, field: "meaning"))
+        }
+    }
+    
+    // Issue #5 - Criterion 6: Validation rejects malformed primary and additional bilingual examples
+    func testStructuralValidation_rejectsMalformedBilingualExamples() {
+        let emptyKazakhPrimary = WordItem(
+            id: 1,
+            kazakh: "батыл",
+            transliteration: "batyl",
+            partOfSpeech: "прилагательное",
+            meaning: "Смелый",
+            primaryExample: BilingualExample(kazakh: "", russian: "Он смелый.")
+        )
+        XCTAssertThrowsError(try VocabularyValidator.validate(entry: emptyKazakhPrimary)) { error in
+            if case .malformedBilingualExample(let id, _) = error as? VocabularyValidationError {
+                XCTAssertEqual(id, 1)
+            } else {
+                XCTFail("Expected malformedBilingualExample error")
+            }
+        }
+        
+        let emptyRussianPrimary = WordItem(
+            id: 2,
+            kazakh: "батыл",
+            transliteration: "batyl",
+            partOfSpeech: "прилагательное",
+            meaning: "Смелый",
+            primaryExample: BilingualExample(kazakh: "Ол батыл.", russian: "   ")
+        )
+        XCTAssertThrowsError(try VocabularyValidator.validate(entry: emptyRussianPrimary)) { error in
+            if case .malformedBilingualExample(let id, _) = error as? VocabularyValidationError {
+                XCTAssertEqual(id, 2)
+            } else {
+                XCTFail("Expected malformedBilingualExample error")
+            }
+        }
+        
+        let malformedAdditional = WordItem(
+            id: 3,
+            kazakh: "батыл",
+            transliteration: "batyl",
+            partOfSpeech: "прилагательное",
+            meaning: "Смелый",
+            primaryExample: BilingualExample(kazakh: "Ол батыл.", russian: "Он смелый."),
+            additionalExamples: [
+                BilingualExample(kazakh: "Жаңа мысал.", russian: "")
+            ]
+        )
+        XCTAssertThrowsError(try VocabularyValidator.validate(entry: malformedAdditional)) { error in
+            if case .malformedBilingualExample(let id, _) = error as? VocabularyValidationError {
+                XCTAssertEqual(id, 3)
+            } else {
+                XCTFail("Expected malformedBilingualExample error for empty translation in additional example")
+            }
+        }
+    }
+    
+    // Issue #5 - Criterion 6: Validation rejects more than two additional examples
+    func testStructuralValidation_rejectsExcessiveAdditionalExamples() {
+        let threeAdditionals = WordItem(
+            id: 1,
+            kazakh: "батыл",
+            transliteration: "batyl",
+            partOfSpeech: "прилагательное",
+            meaning: "Смелый",
+            primaryExample: BilingualExample(kazakh: "Ол батыл.", russian: "Он смелый."),
+            additionalExamples: [
+                BilingualExample(kazakh: "Мысал 1", russian: "Пример 1"),
+                BilingualExample(kazakh: "Мысал 2", russian: "Пример 2"),
+                BilingualExample(kazakh: "Мысал 3", russian: "Пример 3")
+            ]
+        )
+        XCTAssertThrowsError(try VocabularyValidator.validate(entry: threeAdditionals)) { error in
+            XCTAssertEqual(error as? VocabularyValidationError, .excessiveAdditionalExamples(id: 1, count: 3))
+        }
+    }
+    
+    // Issue #5 - Criterion 6: Validation rejects duplicate IDs and empty collections
+    func testStructuralValidation_rejectsDuplicateIDsAndEmptyCollections() {
+        XCTAssertThrowsError(try VocabularyValidator.validate(collection: [])) { error in
+            XCTAssertEqual(error as? VocabularyValidationError, .emptyCollection)
+        }
+        
+        let item1 = WordItem(
+            id: 5,
+            kazakh: "сөз",
+            transliteration: "söz",
+            partOfSpeech: "существительное",
+            meaning: "Слово",
+            primaryExample: BilingualExample(kazakh: "Жақсы сөз", russian: "Хорошее слово")
+        )
+        let item2 = WordItem(
+            id: 5,
+            kazakh: "басқа",
+            transliteration: "basqa",
+            partOfSpeech: "прилагательное",
+            meaning: "Другой",
+            primaryExample: BilingualExample(kazakh: "Басқа адам", russian: "Другой человек")
+        )
+        
+        XCTAssertThrowsError(try VocabularyValidator.validate(collection: [item1, item2])) { error in
+            XCTAssertEqual(error as? VocabularyValidationError, .duplicateID(id: 5))
+        }
+    }
+    
+    // Issue #5 - Criterion 5: VocabularyLoader reports recoverable error on corrupted data or missing resource
+    func testVocabularyLoader_reportsRecoverableErrors() {
+        // Missing resource
+        let missingResult = VocabularyLoader.loadFromBundle(resource: "non_existent_file")
+        switch missingResult {
+        case .failure(let error):
+            XCTAssertEqual(error, .fileNotFound)
+            XCTAssertEqual(error.localizedDescription, "Файл словаря не найден.")
+        case .success:
+            XCTFail("Expected fileNotFound failure")
+        }
+        
+        // Corrupted JSON data
+        let corruptedData = "invalid json {".data(using: .utf8)!
+        let corruptedResult = VocabularyLoader.load(fromData: corruptedData)
+        switch corruptedResult {
+        case .failure(let error):
+            if case .dataCorrupted = error {
+                XCTAssertTrue(error.localizedDescription.contains("Не удалось прочитать данные"))
+            } else {
+                XCTFail("Expected dataCorrupted error")
+            }
+        case .success:
+            XCTFail("Expected corrupted data failure")
+        }
+        
+        // Data with structural validation failure
+        let invalidEntryJSON = """
+        [
+            {
+                "id": 1,
+                "kazakh": "",
+                "transliteration": "test",
+                "partOfSpeech": "существительное",
+                "meaning": "тест",
+                "primaryExample": {
+                    "kazakh": "test",
+                    "russian": "тест"
+                }
+            }
+        ]
+        """.data(using: .utf8)!
+        
+        let invalidResult = VocabularyLoader.load(fromData: invalidEntryJSON)
+        switch invalidResult {
+        case .failure(let error):
+            if case .validationFailed(let valError) = error {
+                XCTAssertEqual(valError, .missingRequiredField(id: 1, field: "kazakh"))
+            } else {
+                XCTFail("Expected validationFailed error")
+            }
+        case .success:
+            XCTFail("Expected validation failure")
+        }
+    }
+    
+    // Issue #5 - Criterion 5 & 6: Bundled words.json loads and passes full validation
+    func testBundledWords_loadsAndPassesFullStructuralValidation() {
+        let words = loadWords()
+        XCTAssertFalse(words.isEmpty, "Bundled words must not be empty")
+        XCTAssertNoThrow(try VocabularyValidator.validate(collection: words), "Bundled words must pass full structural validation")
+        
+        for word in words {
+            XCTAssertFalse(word.kazakh.isEmpty)
+            XCTAssertFalse(word.transliteration.isEmpty)
+            XCTAssertFalse(word.partOfSpeech.isEmpty)
+            XCTAssertFalse(word.meaning.isEmpty)
+            XCTAssertFalse(word.primaryExample.kazakh.isEmpty)
+            XCTAssertFalse(word.primaryExample.russian.isEmpty)
+            if let additionals = word.additionalExamples {
+                XCTAssertLessThanOrEqual(additionals.count, 2)
+                for ex in additionals {
+                    XCTAssertFalse(ex.kazakh.isEmpty)
+                    XCTAssertFalse(ex.russian.isEmpty)
+                }
+            }
+        }
+    }
+    
+    // Issue #5 - Criterion 7: Russian-first entries remain compatible with engine algorithms
+    func testRussianFirstEntries_remainCompatibleWithFeaturedFeedAndSaved() {
+        let testSuiteName = "test.russian.first.compatibility"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+        testDefaults.removeObject(forKey: ExperienceEngine.discoveryFeedOrderKey)
+        
+        let pool = loadWords()
+        XCTAssertFalse(pool.isEmpty)
+        
+        // 1. Featured daily word works with pool
+        let featured = ExperienceEngine.featuredEntry(from: pool, for: Date())
+        XCTAssertNotNil(featured)
+        XCTAssertFalse(featured!.meaning.isEmpty)
+        XCTAssertFalse(featured!.primaryExample.russian.isEmpty)
+        
+        // 2. Discovery feed preparation works with pool
+        let feedOrder = ExperienceEngine.getOrInitializeDiscoveryFeedOrder(from: pool, defaults: testDefaults)
+        let feed = ExperienceEngine.prepareDiscoveryFeed(from: pool, featuredEntry: featured, feedOrder: feedOrder, seenIDs: [])
+        XCTAssertEqual(feed.count, pool.count)
+        XCTAssertEqual(feed.first?.id, featured?.id)
+        
+        // 3. Saved filtering works with pool
+        let savedIDs: Set<Int> = [pool[0].id, pool[1].id]
+        ExperienceEngine.saveSavedWordIDs(savedIDs, in: testDefaults)
+        let savedWords = ExperienceEngine.filterSavedWords(from: pool, savedIDs: ExperienceEngine.getSavedWordIDs(from: testDefaults))
+        XCTAssertEqual(savedWords.count, 2)
+        XCTAssertEqual(savedWords[0].meaning, pool[0].meaning)
+        
+        testDefaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+        testDefaults.removeObject(forKey: ExperienceEngine.discoveryFeedOrderKey)
+    }
 }
