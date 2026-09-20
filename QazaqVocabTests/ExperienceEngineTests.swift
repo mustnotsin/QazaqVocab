@@ -714,6 +714,50 @@ final class ExperienceEngineTests: XCTestCase {
             XCTFail("Failed to load conversational entries: \(error)")
         }
     }
+    
+    // Issue #8 - Acceptance Criteria: 10 expressive and cultural entries pass collection validation and resolve duplicate parasat
+    func testCuratedExpressiveCulturalEntries_passStructuralValidation() throws {
+        let fileURL = URL(fileURLWithPath: #file)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("QazaqVocab/CuratedContent/expressive_cultural.json")
+        
+        let result = VocabularyLoader.load(from: fileURL)
+        switch result {
+        case .success(let items):
+            XCTAssertEqual(items.count, 10, "Curated expressive/cultural collection must contain exactly 10 entries")
+            XCTAssertNoThrow(try VocabularyValidator.validate(collection: items), "Expressive/cultural collection must pass validation")
+            
+            // Acceptance criterion: Duplicate existing parasat entries are resolved intentionally (exactly one parasat entry)
+            let parasatEntries = items.filter { $0.kazakh == "парасат" }
+            XCTAssertEqual(parasatEntries.count, 1, "Duplicate parasat entries must be resolved to exactly 1 curated entry")
+            
+            // Acceptance criterion: All 10 entries have unique words
+            let uniqueWords = Set(items.map { $0.kazakh })
+            XCTAssertEqual(uniqueWords.count, 10, "All 10 expressive/cultural entries must be distinct words")
+            
+            for item in items {
+                XCTAssertFalse(item.kazakh.isEmpty)
+                XCTAssertFalse(item.transliteration.isEmpty)
+                XCTAssertFalse(item.partOfSpeech.isEmpty)
+                XCTAssertFalse(item.meaning.isEmpty)
+                XCTAssertFalse(item.primaryExample.kazakh.isEmpty)
+                XCTAssertFalse(item.primaryExample.russian.isEmpty)
+                XCTAssertNotNil(item.usageExplanation)
+                XCTAssertFalse(item.usageExplanation!.isEmpty)
+                if let additionals = item.additionalExamples {
+                    XCTAssertLessThanOrEqual(additionals.count, 2)
+                    for ex in additionals {
+                        XCTAssertFalse(ex.kazakh.isEmpty)
+                        XCTAssertFalse(ex.russian.isEmpty)
+                    }
+                }
+            }
+        case .failure(let error):
+            XCTFail("Failed to load expressive/cultural entries: \(error)")
+        }
+    }
 }
+
 
 
