@@ -20,6 +20,66 @@ enum ExperienceEngine {
     static let defaultReminderHour = 10
     static let defaultReminderMinute = 0
     
+    // MARK: - Widgets & Deep Linking (Issue #11)
+    
+    /// Canonical fallback entry used when vocabulary loading is missing or empty.
+    /// Structurally verified entry #1: "нан" / "Хлеб".
+    static let fallbackEntry = WordItem(
+        id: 1,
+        kazakh: "нан",
+        transliteration: "nan",
+        partOfSpeech: "существительное",
+        meaning: "Хлеб",
+        primaryExample: BilingualExample(
+            kazakh: "Дүкеннен жаңа піскен нан сатып алдық.",
+            russian: "Мы купили в магазине свежий хлеб."
+        ),
+        usageExplanation: "Базовый продукт питания и символ достатка. В казахской традиции к хлебу относятся с особым почтением: его не бросают и не кладут вверх дном.",
+        additionalExamples: nil
+    )
+    
+    /// Deep linking configuration to navigate directly to the featured entry.
+    static let deepLinkScheme = "qazaqvocab"
+    static let deepLinkFeaturedHost = "featured"
+    static let featuredWordURL = URL(string: "\(deepLinkScheme)://\(deepLinkFeaturedHost)")!
+    
+    /// Validates whether an incoming URL targets the featured daily word.
+    static func isFeaturedWordDeepLink(_ url: URL) -> Bool {
+        guard let scheme = url.scheme, scheme.lowercased() == deepLinkScheme.lowercased() else {
+            return false
+        }
+        let host = url.host?.lowercased() ?? ""
+        let path = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
+        return host == deepLinkFeaturedHost || path == deepLinkFeaturedHost || host == "word" || path == "word"
+    }
+    
+    /// Returns the featured entry for a given date from the pool, falling back to `fallbackEntry` if the pool is empty.
+    static func featuredEntryOrDefault(
+        from pool: [WordItem],
+        for date: Date = Date(),
+        in calendar: Calendar = Calendar.current
+    ) -> WordItem {
+        featuredEntry(from: pool, for: date, in: calendar) ?? fallbackEntry
+    }
+    
+    /// Generates timeline entries for WidgetKit, providing today's featured entry and tomorrow's entry starting at next midnight.
+    static func widgetTimelineEntries(
+        from pool: [WordItem],
+        for currentDate: Date = Date(),
+        in calendar: Calendar = Calendar.current
+    ) -> (current: (date: Date, word: WordItem), next: (date: Date, word: WordItem), nextMidnight: Date) {
+        let todayWord = featuredEntryOrDefault(from: pool, for: currentDate, in: calendar)
+        let nextMidnight = calendar.startOfDay(
+            for: calendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
+        )
+        let tomorrowWord = featuredEntryOrDefault(from: pool, for: nextMidnight, in: calendar)
+        return (
+            current: (date: currentDate, word: todayWord),
+            next: (date: nextMidnight, word: tomorrowWord),
+            nextMidnight: nextMidnight
+        )
+    }
+    
     /// Canonical Russian completion message acknowledging TestFlight testers upon exhausting all unseen entries.
     static let completionMessage = "Упс, похоже, слова закончились! Поздравляем, вы протестировали первую версию моего приложения!"
     

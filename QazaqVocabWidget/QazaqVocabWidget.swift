@@ -10,19 +10,7 @@ struct Provider: TimelineProvider {
     private let words: [WordItem] = loadWords()
     
     private var fallbackWord: WordItem {
-        words.first ?? WordItem(
-            id: 1,
-            kazakh: "нан",
-            transliteration: "nan",
-            partOfSpeech: "существительное",
-            meaning: "Хлеб",
-            primaryExample: BilingualExample(
-                kazakh: "Дүкеннен жаңа піскен нан сатып алдық.",
-                russian: "Мы купили в магазине свежий хлеб."
-            ),
-            usageExplanation: "Базовый продукт питания и символ достатка. В казахской традиции к хлебу относятся с особым почтением: его не бросают и не кладут вверх дном.",
-            additionalExamples: nil
-        )
+        ExperienceEngine.fallbackEntry
     }
 
     func placeholder(in context: Context) -> WordEntry {
@@ -30,23 +18,16 @@ struct Provider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (WordEntry) -> ()) {
-        let entryWord = ExperienceEngine.featuredEntry(from: words) ?? fallbackWord
+        let entryWord = ExperienceEngine.featuredEntryOrDefault(from: words)
         let entry = WordEntry(date: Date(), word: entryWord)
         completion(entry)
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
-        let currentDate = Date()
-        let calendar = Calendar.current
-        
-        let todayWord = ExperienceEngine.featuredEntry(from: words, for: currentDate, in: calendar) ?? fallbackWord
-        let todayEntry = WordEntry(date: currentDate, word: todayWord)
-        
-        let nextMidnight = calendar.startOfDay(for: calendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate)
-        let tomorrowWord = ExperienceEngine.featuredEntry(from: words, for: nextMidnight, in: calendar) ?? fallbackWord
-        let tomorrowEntry = WordEntry(date: nextMidnight, word: tomorrowWord)
-        
-        let timeline = Timeline(entries: [todayEntry, tomorrowEntry], policy: .after(nextMidnight))
+        let timelineData = ExperienceEngine.widgetTimelineEntries(from: words)
+        let todayEntry = WordEntry(date: timelineData.current.date, word: timelineData.current.word)
+        let tomorrowEntry = WordEntry(date: timelineData.next.date, word: timelineData.next.word)
+        let timeline = Timeline(entries: [todayEntry, tomorrowEntry], policy: .after(timelineData.nextMidnight))
         completion(timeline)
     }
 }
@@ -65,11 +46,12 @@ struct QazaqVocabWidgetEntryView : View {
             case .accessoryRectangular:
                 AccessoryRectangularView(word: entry.word)
             case .accessoryInline:
-                Text("\(entry.word.kazakh.lowercased()) • \(entry.word.translation)")
+                Text("\(entry.word.kazakh.lowercased()) • \(entry.word.meaning)")
             default:
                 SmallWidgetView(word: entry.word)
             }
         }
+        .widgetURL(ExperienceEngine.featuredWordURL)
         .containerBackground(for: .widget) {
             Color(red: 0.12, green: 0.12, blue: 0.12)
         }
@@ -81,7 +63,7 @@ struct SmallWidgetView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("WORD OF THE DAY")
+            Text("ГЛАВНОЕ СЛОВО")
                 .font(.system(size: 9, weight: .bold))
                 .tracking(1)
                 .foregroundStyle(Color.white.opacity(0.45))
@@ -99,7 +81,7 @@ struct SmallWidgetView: View {
                 .italic()
                 .foregroundStyle(Color.white.opacity(0.6))
             
-            Text(word.translation)
+            Text(word.meaning)
                 .font(.system(size: 13, weight: .regular))
                 .foregroundStyle(Color.white.opacity(0.85))
                 .lineLimit(2)
@@ -116,7 +98,7 @@ struct MediumWidgetView: View {
     var body: some View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("WORD OF THE DAY")
+                Text("ГЛАВНОЕ СЛОВО")
                     .font(.system(size: 9, weight: .bold))
                     .tracking(1)
                     .foregroundStyle(Color.white.opacity(0.45))
@@ -124,12 +106,14 @@ struct MediumWidgetView: View {
                 Spacer()
                 
                 Text(word.kazakh.lowercased())
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 
                 HStack(spacing: 6) {
-                    if let phonetic = word.phonetic {
-                        Text("/\(phonetic)/")
+                    if !word.transliteration.isEmpty {
+                        Text("/\(word.transliteration)/")
                             .font(.system(size: 12))
                             .foregroundStyle(Color.white.opacity(0.5))
                     }
@@ -141,9 +125,10 @@ struct MediumWidgetView: View {
                         .foregroundStyle(Color.white.opacity(0.5))
                 }
                 
-                Text(word.translation)
+                Text(word.meaning)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(Color.white.opacity(0.9))
+                    .lineLimit(2)
                 
                 Spacer()
             }
@@ -153,17 +138,26 @@ struct MediumWidgetView: View {
                 .background(Color.white.opacity(0.15))
             
             VStack(alignment: .leading, spacing: 6) {
-                Text("EXAMPLE")
+                Text("ПРИМЕР")
                     .font(.system(size: 9, weight: .bold))
                     .tracking(1)
                     .foregroundStyle(Color.white.opacity(0.45))
                 
                 Spacer()
                 
-                Text(word.example)
+                Text(word.primaryExample.kazakh)
                     .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(Color.white.opacity(0.8))
+                    .foregroundStyle(Color.white.opacity(0.85))
                     .lineSpacing(2)
+                    .lineLimit(3)
+                
+                if !word.primaryExample.russian.isEmpty {
+                    Text(word.primaryExample.russian)
+                        .font(.system(size: 11, weight: .regular))
+                        .italic()
+                        .foregroundStyle(Color.white.opacity(0.55))
+                        .lineLimit(2)
+                }
                 
                 Spacer()
             }
@@ -180,7 +174,7 @@ struct AccessoryRectangularView: View {
             Text(word.kazakh.lowercased())
                 .font(.headline)
                 .widgetAccentable()
-            Text(word.translation)
+            Text(word.meaning)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
@@ -196,8 +190,8 @@ struct QazaqVocabWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             QazaqVocabWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Daily Kazakh Word")
-        .description("Learn a curated Kazakh word every day right from your home and lock screen.")
+        .configurationDisplayName("Главное слово дня")
+        .description("Открывайте главное казахское слово каждый день прямо на экране «Домой» и экране блокировки.")
         .supportedFamilies([
             .systemSmall,
             .systemMedium,

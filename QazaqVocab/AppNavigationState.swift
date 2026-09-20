@@ -12,13 +12,15 @@ public final class AppNavigationState: ObservableObject {
     
     @Published public var selectedTab: AppTab = .words
     @Published public var scrollToFeaturedTrigger: UUID = UUID()
+    @Published public var dismissDetailsTrigger: UUID = UUID()
     
     public init() {}
     
-    /// Switches to the Words tab and triggers scrolling to the top featured daily word (Criterion 6).
+    /// Switches to the Words tab, dismisses any open details, and triggers scrolling to the top featured daily word.
     public func navigateToFeaturedWord() {
         DispatchQueue.main.async {
             self.selectedTab = .words
+            self.dismissDetailsTrigger = UUID()
             self.scrollToFeaturedTrigger = UUID()
         }
     }

@@ -317,6 +317,9 @@ struct HomeFeedView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+            .onReceive(AppNavigationState.shared.$dismissDetailsTrigger) { _ in
+                selectedWordForDetails = nil
+            }
             .onAppear {
                 prepareFeed()
             }
@@ -660,6 +663,9 @@ struct SavedSectionView: View {
                 WordDetailSheet(word: word, savedWordIDs: $savedWordIDs)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
+            }
+            .onReceive(AppNavigationState.shared.$dismissDetailsTrigger) { _ in
+                selectedWordForDetails = nil
             }
         }
     }
