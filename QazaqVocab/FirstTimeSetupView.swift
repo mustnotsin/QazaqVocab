@@ -18,20 +18,22 @@ struct FirstTimeSetupView: View {
     
     var body: some View {
         ZStack {
-            Color(red: 0.12, green: 0.12, blue: 0.12)
+            QazaqTheme.Colors.background
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Header / Step indicator
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(currentStep == 1 ? Color(red: 0.95, green: 0.77, blue: 0.25) : Color.white.opacity(0.2))
+                        .fill(currentStep == 1 ? QazaqTheme.Colors.steppeGold : Color.white.opacity(0.2))
                         .frame(width: 8, height: 8)
                     Circle()
-                        .fill(currentStep == 2 ? Color(red: 0.95, green: 0.77, blue: 0.25) : Color.white.opacity(0.2))
+                        .fill(currentStep == 2 ? QazaqTheme.Colors.steppeGold : Color.white.opacity(0.2))
                         .frame(width: 8, height: 8)
                 }
                 .padding(.top, 32)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Шаг \(currentStep) из 2")
                 
                 Spacer()
                 
@@ -56,23 +58,22 @@ struct FirstTimeSetupView: View {
         .preferredColorScheme(.dark)
     }
     
-    // MARK: - Step 1: Discovery Promise (Criterion 1 & 2)
+    // MARK: - Step 1: Discovery Promise
     private var stepOneView: some View {
         VStack(spacing: 24) {
             ZStack {
                 Circle()
-                    .fill(Color(red: 0.18, green: 0.18, blue: 0.18))
+                    .fill(QazaqTheme.Colors.pillSurface)
                     .frame(width: 88, height: 88)
                     .overlay(
                         Circle()
                             .stroke(Color.white.opacity(0.12), lineWidth: 1)
                     )
                 
-                Image(systemName: "text.book.closed")
-                    .font(.system(size: 38, weight: .medium))
-                    .foregroundStyle(Color(red: 0.95, green: 0.77, blue: 0.25))
+                QazaqLogoMark(size: 46, accentColor: QazaqTheme.Colors.steppeGold)
             }
             .padding(.bottom, 8)
+            .accessibilityHidden(true)
             
             Text("Одно слово каждый день")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -107,20 +108,21 @@ struct FirstTimeSetupView: View {
                     .padding(.vertical, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(Color(red: 0.95, green: 0.77, blue: 0.25))
+                            .fill(QazaqTheme.Colors.steppeGold)
                     )
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Продолжить переход ко второму шагу")
             .padding(.top, 20)
         }
     }
     
-    // MARK: - Step 2: Reminder Time & Contextual Permission (Criterion 1, 3, 4 & 5)
+    // MARK: - Step 2: Reminder Time & Contextual Permission
     private var stepTwoView: some View {
         VStack(spacing: 20) {
             ZStack {
                 Circle()
-                    .fill(Color(red: 0.18, green: 0.18, blue: 0.18))
+                    .fill(QazaqTheme.Colors.pillSurface)
                     .frame(width: 88, height: 88)
                     .overlay(
                         Circle()
@@ -129,9 +131,10 @@ struct FirstTimeSetupView: View {
                 
                 Image(systemName: "bell.badge")
                     .font(.system(size: 38, weight: .medium))
-                    .foregroundStyle(Color(red: 0.95, green: 0.77, blue: 0.25))
+                    .foregroundStyle(QazaqTheme.Colors.steppeGold)
             }
             .padding(.bottom, 4)
+            .accessibilityHidden(true)
             
             Text("Ежедневное напоминание")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -145,16 +148,16 @@ struct FirstTimeSetupView: View {
                 .foregroundStyle(Color.white.opacity(0.8))
                 .padding(.horizontal, 12)
             
-            // Time selection before permission prompt (Criterion 3)
+            // Time selection before permission prompt
             ZStack {
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(red: 0.16, green: 0.16, blue: 0.16))
+                    .fill(QazaqTheme.Colors.cardSurface)
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
                     )
                 
-                DatePicker("", selection: $reminderDate, displayedComponents: .hourAndMinute)
+                DatePicker("Время напоминания", selection: $reminderDate, displayedComponents: .hourAndMinute)
                     .datePickerStyle(.wheel)
                     .labelsHidden()
                     .colorScheme(.dark)
@@ -182,11 +185,12 @@ struct FirstTimeSetupView: View {
                     .padding(.vertical, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(Color(red: 0.95, green: 0.77, blue: 0.25))
+                            .fill(QazaqTheme.Colors.steppeGold)
                     )
                 }
                 .buttonStyle(.plain)
                 .disabled(isProcessing)
+                .accessibilityLabel("Включить ежедневные напоминания")
                 
                 Button {
                     handleSkipReminders()
@@ -199,6 +203,7 @@ struct FirstTimeSetupView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(isProcessing)
+                .accessibilityLabel("Пропустить настройку напоминаний")
             }
             .padding(.top, 8)
         }
@@ -214,7 +219,6 @@ struct FirstTimeSetupView: View {
         let minute = calendar.component(.minute, from: reminderDate)
         
         Task {
-            // Requests notification permission and schedules if granted
             _ = try? await DailyReminderManager.shared.scheduleReminder(hour: hour, minute: minute)
             
             await MainActor.run {

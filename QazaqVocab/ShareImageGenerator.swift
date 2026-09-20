@@ -3,8 +3,8 @@ import UIKit
 import LinkPresentation
 
 @MainActor
-struct ShareImageGenerator {
-    static func renderCard(for word: WordItem) -> UIImage? {
+public struct ShareImageGenerator {
+    public static func renderCard(for word: WordItem) -> UIImage? {
         let cardView = ShareCardView(word: word)
         let renderer = ImageRenderer(content: cardView)
         renderer.scale = 3.0
@@ -13,35 +13,38 @@ struct ShareImageGenerator {
     }
 }
 
-class ShareCardActivityItemSource: NSObject, UIActivityItemSource {
-    let image: UIImage
-    let title: String
+public class ShareCardActivityItemSource: NSObject, UIActivityItemSource {
+    public let image: UIImage
+    public let title: String
     
-    init(image: UIImage, title: String) {
+    public init(image: UIImage, title: String) {
         self.image = image
         self.title = title
         super.init()
     }
     
-    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
+    public func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
         return image
     }
     
-    func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
+    public func activityViewController(_ activityViewController: UIActivityViewController, itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
         return image
     }
     
-    func activityViewControllerLinkMetadata(_ activityViewController: UIActivityViewController) -> LPLinkMetadata? {
+    public func activityViewControllerLinkMetadata(_ activityViewController: UIActivityViewController) -> LPLinkMetadata? {
         let metadata = LPLinkMetadata()
         metadata.title = title
         metadata.imageProvider = NSItemProvider(object: image)
+        // Ensure no external URLs or app store links are attached during private TestFlight
+        metadata.originalURL = nil
+        metadata.url = nil
         return metadata
     }
 }
 
-struct SharePresenter {
+public struct SharePresenter {
     @MainActor
-    static func presentShareSheet(word: WordItem) {
+    public static func presentShareSheet(word: WordItem) {
         guard let image = ShareImageGenerator.renderCard(for: word) else { return }
         
         let itemSource = ShareCardActivityItemSource(
