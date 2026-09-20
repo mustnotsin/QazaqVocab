@@ -528,6 +528,26 @@ final class ExperienceEngineTests: XCTestCase {
         XCTAssertThrowsError(try VocabularyValidator.validate(collection: [item1, item2])) { error in
             XCTAssertEqual(error as? VocabularyValidationError, .duplicateID(id: 5))
         }
+        
+        let dupWord1 = WordItem(
+            id: 1,
+            kazakh: "парасат",
+            transliteration: "parasat",
+            partOfSpeech: "существительное",
+            meaning: "Мудрость",
+            primaryExample: BilingualExample(kazakh: "Мысал 1", russian: "Пример 1")
+        )
+        let dupWord2 = WordItem(
+            id: 2,
+            kazakh: "парасат",
+            transliteration: "parasat",
+            partOfSpeech: "существительное",
+            meaning: "Благоразумие",
+            primaryExample: BilingualExample(kazakh: "Мысал 2", russian: "Пример 2")
+        )
+        XCTAssertThrowsError(try VocabularyValidator.validate(collection: [dupWord1, dupWord2])) { error in
+            XCTAssertEqual(error as? VocabularyValidationError, .duplicateWord(kazakh: "парасат"))
+        }
     }
     
     // Issue #5 - Criterion 5: VocabularyLoader reports recoverable error on corrupted data or missing resource
@@ -758,6 +778,14 @@ final class ExperienceEngineTests: XCTestCase {
     
     // MARK: - Issue #9: Assemble the approved TestFlight collection
     
+    private func resetTestDefaults(_ defaults: UserDefaults) {
+        defaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
+        defaults.removeObject(forKey: ExperienceEngine.seenWordIDsKey)
+        defaults.removeObject(forKey: ExperienceEngine.discoveryFeedOrderKey)
+        defaults.removeObject(forKey: ExperienceEngine.isCollectionCompletedKey)
+        defaults.removeObject(forKey: ExperienceEngine.isReminderEligibleKey)
+    }
+    
     // Acceptance Criteria 1, 4 & 7: Bundled collection contains exactly 30 entries with unique IDs, passes validation, no duplicates
     func testBundledCollection_containsExactly30UniqueEntriesAndNoDuplicates() {
         let words = loadWords()
@@ -766,7 +794,7 @@ final class ExperienceEngineTests: XCTestCase {
         let ids = words.map(\.id)
         let uniqueIDs = Set(ids)
         XCTAssertEqual(uniqueIDs.count, 30, "Every entry must have a unique identifier")
-        XCTAssertEqual(ids, Array(1...30), "IDs must be sequential from 1 to 30")
+        XCTAssertEqual(uniqueIDs, Set(1...30), "IDs must span 1 to 30 without gaps")
         
         let kazakhWords = words.map(\.kazakh)
         let uniqueWords = Set(kazakhWords)
@@ -781,7 +809,7 @@ final class ExperienceEngineTests: XCTestCase {
         XCTAssertNoThrow(try VocabularyValidator.validate(collection: words), "Bundled collection must pass full structural validation")
     }
     
-    // Acceptance Criterion 2: Contains exactly 10 basic, 10 conversational, and 10 expressive/cultural approved entries
+    // Acceptance Criterion 2: Contains exactly 10 basic, 10 conversational, and 10 expressive/cultural approved entries interleaved for daily variety
     func testBundledCollection_containsExactCuratedMix() throws {
         let words = loadWords()
         XCTAssertEqual(words.count, 30)
@@ -794,53 +822,63 @@ final class ExperienceEngineTests: XCTestCase {
         let convURL = projectRoot.appendingPathComponent("QazaqVocab/CuratedContent/conversational.json")
         let exprURL = projectRoot.appendingPathComponent("QazaqVocab/CuratedContent/expressive_cultural.json")
         
-        guard case .success(let basicItems) = VocabularyLoader.load(from: basicURL),
-              case .success(let convItems) = VocabularyLoader.load(from: convURL),
-              case .success(let exprItems) = VocabularyLoader.load(from: exprURL) else {
+        guard case .success(let basicEntries) = VocabularyLoader.load(from: basicURL),
+              case .success(let convEntries) = VocabularyLoader.load(from: convURL),
+              case .success(let exprEntries) = VocabularyLoader.load(from: exprURL) else {
             XCTFail("Failed to load source curated collections")
             return
         }
         
-        XCTAssertEqual(basicItems.count, 10)
-        XCTAssertEqual(convItems.count, 10)
-        XCTAssertEqual(exprItems.count, 10)
+        XCTAssertEqual(basicEntries.count, 10)
+        XCTAssertEqual(convEntries.count, 10)
+        XCTAssertEqual(exprEntries.count, 10)
         
-        // Check slice 0..<10 matches basic_everyday
-        let basicSlice = Array(words[0..<10])
-        XCTAssertEqual(basicSlice, basicItems, "First 10 entries must match curated basic everyday entries")
+        let basicIDs = Set(basicEntries.map(\.id))
+        let convIDs = Set(convEntries.map(\.id))
+        let exprIDs = Set(exprEntries.map(\.id))
         
-        // Check slice 10..<20 matches conversational
-        let convSlice = Array(words[10..<20])
-        XCTAssertEqual(convSlice, convItems, "Middle 10 entries must match curated conversational entries")
+        // Verify all 30 curated entries are present in the collection
+        let collectionIDs = Set(words.map(\.id))
+        XCTAssertTrue(basicIDs.isSubset(of: collectionIDs), "All 10 basic everyday entries must be present")
+        XCTAssertTrue(convIDs.isSubset(of: collectionIDs), "All 10 conversational entries must be present")
+        XCTAssertTrue(exprIDs.isSubset(of: collectionIDs), "All 10 expressive/cultural entries must be present")
         
-        // Check slice 20..<30 matches expressive_cultural
-        let exprSlice = Array(words[20..<30])
-        XCTAssertEqual(exprSlice, exprItems, "Last 10 entries must match curated expressive/cultural entries")
+        // CONTEXT.md Vocabulary mix requirement: mixed together without visible categories or difficulty labels
+        // Verify interleaving so that consecutive days provide variety (Basic -> Conversational -> Expressive)
+        for cycle in 0..<10 {
+            let basicCandidate = words[cycle * 3]
+            let convCandidate = words[cycle * 3 + 1]
+            let exprCandidate = words[cycle * 3 + 2]
+            
+            XCTAssertTrue(basicIDs.contains(basicCandidate.id), "Position \(cycle * 3) must be a basic everyday entry")
+            XCTAssertTrue(convIDs.contains(convCandidate.id), "Position \(cycle * 3 + 1) must be a conversational entry")
+            XCTAssertTrue(exprIDs.contains(exprCandidate.id), "Position \(cycle * 3 + 2) must be an expressive/cultural entry")
+        }
     }
     
     // Acceptance Criterion 3: Every required Russian/Kazakh field is complete and structurally valid
     func testBundledCollection_allFieldsCompleteAndStructurallyValid() {
         let words = loadWords()
         
-        for item in words {
+        for entry in words {
             // Kazakh & transliteration
-            XCTAssertFalse(item.kazakh.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            XCTAssertFalse(item.transliteration.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertFalse(entry.kazakh.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertFalse(entry.transliteration.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             
             // Russian grammatical & meaning fields
-            XCTAssertFalse(item.partOfSpeech.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            XCTAssertFalse(item.meaning.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertFalse(entry.partOfSpeech.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertFalse(entry.meaning.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             
             // Primary bilingual example
-            XCTAssertFalse(item.primaryExample.kazakh.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            XCTAssertFalse(item.primaryExample.russian.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertFalse(entry.primaryExample.kazakh.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertFalse(entry.primaryExample.russian.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             
             // Usage explanation
-            XCTAssertNotNil(item.usageExplanation)
-            XCTAssertFalse(item.usageExplanation!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            XCTAssertNotNil(entry.usageExplanation)
+            XCTAssertFalse(entry.usageExplanation!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             
             // Additional bilingual examples (at most 2)
-            if let additionals = item.additionalExamples {
+            if let additionals = entry.additionalExamples {
                 XCTAssertLessThanOrEqual(additionals.count, 2)
                 for ex in additionals {
                     XCTAssertFalse(ex.kazakh.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -863,19 +901,19 @@ final class ExperienceEngineTests: XCTestCase {
             "зат есім" // Old Kazakh grammatical POS label replaced by Russian-first 'существительное'
         ]
         
-        for item in words {
+        for entry in words {
             for forbidden in forbiddenPlaceholders {
                 XCTAssertFalse(
-                    item.meaning.localizedCaseInsensitiveContains(forbidden),
-                    "Entry \(item.id) meaning contains forbidden placeholder: \(forbidden)"
+                    entry.meaning.localizedCaseInsensitiveContains(forbidden),
+                    "Entry \(entry.id) meaning contains forbidden placeholder: \(forbidden)"
                 )
                 XCTAssertFalse(
-                    item.partOfSpeech.localizedCaseInsensitiveContains(forbidden),
-                    "Entry \(item.id) partOfSpeech contains forbidden placeholder: \(forbidden)"
+                    entry.partOfSpeech.localizedCaseInsensitiveContains(forbidden),
+                    "Entry \(entry.id) partOfSpeech contains forbidden placeholder: \(forbidden)"
                 )
                 XCTAssertFalse(
-                    item.primaryExample.russian.localizedCaseInsensitiveContains(forbidden),
-                    "Entry \(item.id) example translation contains forbidden placeholder: \(forbidden)"
+                    entry.primaryExample.russian.localizedCaseInsensitiveContains(forbidden),
+                    "Entry \(entry.id) example translation contains forbidden placeholder: \(forbidden)"
                 )
             }
         }
@@ -885,11 +923,7 @@ final class ExperienceEngineTests: XCTestCase {
     func testBundledCollection_worksWithEngineFlows() {
         let testSuiteName = "test.assembled.collection.suite"
         let defaults = UserDefaults(suiteName: testSuiteName)!
-        defaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
-        defaults.removeObject(forKey: ExperienceEngine.seenWordIDsKey)
-        defaults.removeObject(forKey: ExperienceEngine.discoveryFeedOrderKey)
-        defaults.removeObject(forKey: ExperienceEngine.isCollectionCompletedKey)
-        defaults.removeObject(forKey: ExperienceEngine.isReminderEligibleKey)
+        resetTestDefaults(defaults)
         
         let words = loadWords()
         XCTAssertEqual(words.count, 30)
@@ -967,11 +1001,7 @@ final class ExperienceEngineTests: XCTestCase {
         XCTAssertEqual(savedList.map(\.id), [words[0].id, words[14].id, words[29].id])
         
         // Cleanup
-        defaults.removeObject(forKey: ExperienceEngine.savedWordIDsKey)
-        defaults.removeObject(forKey: ExperienceEngine.seenWordIDsKey)
-        defaults.removeObject(forKey: ExperienceEngine.discoveryFeedOrderKey)
-        defaults.removeObject(forKey: ExperienceEngine.isCollectionCompletedKey)
-        defaults.removeObject(forKey: ExperienceEngine.isReminderEligibleKey)
+        resetTestDefaults(defaults)
     }
 }
 

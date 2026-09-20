@@ -608,7 +608,7 @@ struct SavedSectionView: View {
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                     Button(role: .destructive) {
                                         HapticManager.impact(style: .medium)
-                                        withAnimation {
+                                        _ = withAnimation {
                                             savedWordIDs.remove(word.id)
                                         }
                                         WidgetCenter.shared.reloadTimelines(ofKind: "QazaqVocabWidget")

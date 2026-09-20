@@ -149,6 +149,7 @@ public enum VocabularyValidationError: LocalizedError, Equatable {
     case malformedBilingualExample(id: Int, context: String)
     case excessiveAdditionalExamples(id: Int, count: Int)
     case duplicateID(id: Int)
+    case duplicateWord(kazakh: String)
     
     public var errorDescription: String? {
         switch self {
@@ -162,6 +163,8 @@ public enum VocabularyValidationError: LocalizedError, Equatable {
             return "Слово (ID: \(id)) содержит \(count) дополнительных примеров (разрешено не более 2)."
         case .duplicateID(let id):
             return "Обнаружен дубликат идентификатора: \(id)."
+        case .duplicateWord(let kazakh):
+            return "Обнаружен дубликат слова: '\(kazakh)'."
         }
     }
 }
@@ -221,11 +224,19 @@ public struct VocabularyValidator {
         }
         
         var seenIDs = Set<Int>()
+        var seenWords = Set<String>()
         for entry in collection {
             guard !seenIDs.contains(entry.id) else {
                 throw VocabularyValidationError.duplicateID(id: entry.id)
             }
             seenIDs.insert(entry.id)
+            
+            let normalizedWord = entry.kazakh.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard !seenWords.contains(normalizedWord) else {
+                throw VocabularyValidationError.duplicateWord(kazakh: entry.kazakh)
+            }
+            seenWords.insert(normalizedWord)
+            
             try validate(entry: entry)
         }
     }
